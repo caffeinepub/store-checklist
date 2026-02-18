@@ -6,14 +6,15 @@ import Text "mo:core/Text";
 import Storage "blob-storage/Storage";
 import Array "mo:core/Array";
 import Int "mo:core/Int";
-import Migration "migration";
+
 import MixinStorage "blob-storage/Mixin";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 
-// Use the migration function to transform persistent state on upgrades
+import Migration "migration";
+
 (with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
@@ -55,18 +56,25 @@ actor {
   };
 
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user) {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
       Runtime.trap("Unauthorized: Can only view your own profile");
     };
     userProfiles.get(user);
   };
 
   public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
     userProfiles.add(caller, profile);
   };
 
   // Checklist submission
   public shared ({ caller }) func createChecklistEntry(storeName : Text, items : [ChecklistItem]) : async Text {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can create checklist entries");
+    };
+    
     checklistEntryCounter += 1;
     let entryId = checklistEntryCounter.toText();
 
@@ -139,4 +147,3 @@ actor {
     };
   };
 };
-

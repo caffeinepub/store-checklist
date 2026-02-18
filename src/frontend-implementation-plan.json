@@ -1,72 +1,88 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Restore frontend backend connectivity UX and remove caffeine.ai footer",
+  "title": "Protect — Fix admin dashboard permission error after admin login (frontend-only)",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Stabilize frontend actor readiness and health-check flow so backend connectivity is reliable with clear retry behavior.",
+      "summary": "Ensure the frontend only runs admin dashboard queries when the current Internet Identity principal is authenticated and authorized as admin, preventing spurious permission errors after admin login.",
       "acceptanceCriteria": [
-        "From the Login page, the app reaches a stable connected state (no ongoing 'Connecting...' indicator) within a reasonable time on a normal network connection.",
-        "The frontend can successfully call the backend health endpoint (ping -> \"pong\") without throwing an error.",
-        "User flow works again: after Internet Identity login, the app navigates to /checklist and loads the caller profile query without connection failures.",
-        "If the backend is truly unreachable, the UI shows a clear error state and the Retry button attempts reconnection without requiring a full page reload."
+        "After completing the admin login flow, the Admin Dashboard successfully loads submissions when the logged-in principal has admin access (no 'You do not have permission to perform this action.' error).",
+        "If the current caller is not an admin, admin-only backend calls (e.g., getAllEntriesSortedByNewestEntries, getEntry) remain protected and do not expose data.",
+        "Admin-only pages do not attempt admin queries unless the app has validated that an admin session is active AND the caller is authorized as admin."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useBackendActor.ts",
+          "path": "frontend/src/hooks/useAdminSession.ts",
           "operation": "modify",
-          "description": "Refine actor readiness to incorporate an explicit health-check state (ping/pong) and ensure actorError reflects true connectivity failures (including ping failures) rather than leaving the UI in a perpetual 'Connecting...' state; update retry to reliably invalidate/refetch the actor query for both anonymous and authenticated states without requiring a reload."
+          "description": "Refactor admin session state to be principal/identity-based (derived from Internet Identity) rather than sessionStorage credentials; store only non-sensitive UI state (e.g., last known admin check result, redirect message) needed for UX. Verify the component's usage instructions before implementing (authorization: principal-based auth expectations)."
         },
         {
-          "path": "frontend/src/pages/LoginChoice.tsx",
+          "path": "frontend/src/utils/adminSession.ts",
           "operation": "modify",
-          "description": "Adjust the Login page connection UI to rely on the improved useBackendActor readiness/health state so 'Connecting...' resolves when healthy, shows a clear error when unhealthy, and the Retry button triggers the hook retry and returns the UI to a connecting state while retrying."
+          "description": "Update session utilities to remove/ignore any hardcoded admin credential storage and instead support storing a lightweight admin access state (e.g., last check timestamp/result) and redirect/recovery messages without granting access by itself."
         },
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Ensure profile and checklist React Query hooks consistently gate calls on the updated actor readiness/health state and use the shared error normalization so calls do not fail during transient actor initialization; keep retry behavior aligned with retryable vs non-retryable connectivity states."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Remove the caffeine.ai attribution from the footer across the app without leaving layout gaps.",
-      "acceptanceCriteria": [
-        "The footer no longer renders any link/text referencing \"caffeine.ai\" on all routes.",
-        "No empty/extra footer spacing remains after removal (page layout looks intentional at the bottom)."
-      ],
-      "file_operations": [
+          "description": "Gate admin React Query hooks behind an explicit 'isAdmin' check sourced from backend role queries (e.g., isCallerAdmin/hasAdminRole), and ensure admin data queries are disabled until actor is ready AND admin authorization has been confirmed. Verify the component's usage instructions before implementing (authorization: call backend role check and handle traps gracefully)."
+        },
         {
-          "path": "frontend/src/components/AppLayout.tsx",
+          "path": "frontend/src/pages/AdminDashboard.tsx",
           "operation": "modify",
-          "description": "Remove the 'Built with caffeine.ai' attribution block (including the caffeine.ai link and related icon usage) and adjust footer content/layout so spacing remains intentional across all routes."
+          "description": "Change dashboard load flow to: (1) require authenticated identity, (2) confirm admin authorization, then (3) fetch submissions; prevent calling admin queries when unauthorized, and show an actionable Access Denied state with a clear return-to-login action when not admin."
+        },
+        {
+          "path": "frontend/src/pages/AdminSubmissionDetail.tsx",
+          "operation": "modify",
+          "description": "Apply the same admin gating as AdminDashboard for per-entry admin reads; do not attempt getEntry unless identity is authenticated and admin is confirmed; show actionable unauthorized vs connectivity error states."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add/adjust route guarding for /admin routes so navigation does not proceed to admin pages until Internet Identity is authenticated and admin authorization is confirmed; if not authorized, redirect to the login screen with a clear message (no admin queries attempted pre-authorization)."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Make all user-facing backend connectivity errors friendly English and prevent raw technical details from appearing in UI.",
+      "summary": "Update admin login UX and error/retry handling so admin access is tied to the authenticated Internet Identity principal and authorization failures provide clear recovery actions without endless retry loops.",
       "acceptanceCriteria": [
-        "When backend connection fails, the UI displays a short English error message suitable for end users.",
-        "Technical details (if logged) stay in the browser console and are not rendered in visible UI components."
+        "Admin login flow ensures the user is authenticated with Internet Identity before navigating to /admin routes and attempting admin queries.",
+        "If the caller is not authorized as admin, the UI shows a clear message explaining that the signed-in identity lacks admin permission and provides a way to return to the login screen (and/or re-authenticate).",
+        "Retry on Admin Dashboard retries the correct failing step (backend actor init vs query refetch) and does not loop endlessly on authorization failures.",
+        "The displayed error on Admin Dashboard is actionable and not misleading (distinguish permission errors from connectivity errors)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/utils/backendErrors.ts",
+          "path": "frontend/src/pages/LoginChoice.tsx",
           "operation": "modify",
-          "description": "Tighten error classification/normalization so returned userMessage values are consistently short, user-friendly English (including for authorization-like traps) and ensure technical/rejection metadata is stripped from messages shown in the UI, while keeping detailed diagnostics in console logs."
+          "description": "Revise the admin login choice flow to require Internet Identity authentication first, then verify admin authorization using backend role checks before routing to /admin; remove any frontend-only credential-based admin granting. Verify the component's usage instructions before implementing (authorization: Internet Identity principal + role-based access control)."
         },
         {
           "path": "frontend/src/hooks/useBackendActor.ts",
           "operation": "modify",
-          "description": "Route any connectivity/initialization errors through the shared backend error normalization and ensure UI-facing error strings never include raw error objects or stack traces (keep details only in console logging)."
+          "description": "Ensure actor readiness/health checks integrate cleanly with admin authorization checks; expose enough state to let pages decide whether Retry should re-init actor/identity vs refetch data, and avoid repeated retries on authorization failures."
         },
         {
-          "path": "frontend/src/pages/UserChecklist.tsx",
+          "path": "frontend/src/utils/backendErrors.ts",
           "operation": "modify",
-          "description": "Ensure any backend/connection failures surfaced on the checklist page display only the normalized, user-friendly English message (no raw error serialization) while keeping technical details confined to console logging."
+          "description": "Improve error normalization so authorization/permission traps are categorized distinctly from connectivity/timeouts; provide stable error codes/messages that admin pages can use to display actionable guidance in English."
+        },
+        {
+          "path": "frontend/src/components/AppHeader.tsx",
+          "operation": "modify",
+          "description": "On logout, clear any cached admin-authorization state and related query cache so subsequent users/principals do not inherit stale admin UI state; keep behavior aligned with identity-based session. Verify the component's usage instructions before implementing (authorization: clear cached data on logout)."
+        },
+        {
+          "path": "frontend/src/hooks/useAdminBootstrap.ts",
+          "operation": "modify",
+          "description": "Implement a small frontend hook responsible for: running the admin authorization check (e.g., call isCallerAdmin/hasAdminRole once actor+identity are ready), caching the result for the session, and providing a single 'retry' that re-runs the correct step without infinite loops. Verify the component's usage instructions before implementing (authorization: role check should reflect backend enforcement)."
+        },
+        {
+          "path": "frontend/src/pages/AdminDashboard.tsx",
+          "operation": "modify",
+          "description": "Update the dashboard error UI to distinguish 'not signed in', 'not an admin', and 'cannot reach backend' states; wire buttons so Retry triggers the appropriate action (actor init vs refetch) and unauthorized states offer return-to-login / re-auth actions rather than looping retries."
         }
       ]
     }

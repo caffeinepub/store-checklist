@@ -4,37 +4,37 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "App is not connecting to the backend.",
-    "\"caffeine ai\" element reappeared at the bottom of the UI (regression)."
+    "Admin can log in successfully, but an error is displayed after login (needs investigation/fix)."
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-fix-the-frontend-to-backend-connection-so-the-app-can-successfully-create-a-backend-actor-and-call-the-backend-without-showing-a-persistent-connection-error",
-      "title": "Fix the frontend-to-backend connection so the app can successfully create a backend actor and call the backend without showing a persistent connection error.",
+      "id": "feature-fix-the-admin-authentication-authorization-flow-so-that-an-admin-who-logs-in-can-successfully-load-admin-dashboard-data-without-receiving-an-authorization-permission-error",
+      "title": "Fix the admin authentication/authorization flow so that an admin who logs in can successfully load Admin Dashboard data without receiving an authorization/permission error.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-remove-the-built-with-caffeine-ai-attribution-element-from-the-bottom-of-the-ui-so-it-no-longer-appears-in-the-app-footer",
-      "title": "Remove the 'Built with caffeine.ai' attribution element from the bottom of the UI so it no longer appears in the app footer.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-any-user-facing-backend-connectivity-error-messages-are-in-english-and-remain-user-friendly-no-raw-technical-stack-traces-shown-in-the-ui",
-      "title": "Ensure any user-facing backend connectivity error messages are in English and remain user-friendly (no raw technical stack traces shown in the UI).",
+      "id": "feature-update-the-frontend-admin-login-and-admin-page-gating-so-that-admin-access-is-tied-to-the-authenticated-internet-identity-principal-not-just-sessionstorage-credentials-and-present-clear-recovery-actions-when-authorization-fails",
+      "title": "Update the frontend admin login and admin page gating so that admin access is tied to the authenticated Internet Identity principal (not just sessionStorage credentials), and present clear recovery actions when authorization fails.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     }
   ],
-  "new_feature_requests": [],
+  "new_feature_requests": [
+    {
+      "id": "AR-2",
+      "summary": "Add backend support to reliably establish at least one admin principal (bootstrap) and to check admin authorization in a way the frontend can use, without relying on frontend-only hardcoded credentials.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "status": "pending"
+    }
+  ],
   "projectName": "Protect",
   "clarification_mode": "instant",
   "clarification_rounds": 0

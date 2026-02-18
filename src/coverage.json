@@ -1,54 +1,59 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T10:54:38.540Z",
+  "generatedAt": "2026-02-18T11:10:39.224Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
     "total": 3,
-    "implemented": 3,
+    "implemented": 2,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Fix the frontend-to-backend connection so the app can successfully create a backend actor and call the backend without showing a persistent connection error.",
+        "summary": "Fix the admin authentication/authorization flow so that an admin who logs in can successfully load Admin Dashboard data without receiving an authorization/permission error.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useBackendActor.ts",
-          "frontend/src/pages/LoginChoice.tsx",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/hooks/useAdminSession.ts",
+          "frontend/src/utils/adminSession.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/AdminDashboard.tsx",
+          "frontend/src/pages/AdminSubmissionDetail.tsx",
+          "frontend/src/App.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useBackendActor.ts",
-          "frontend/src/pages/LoginChoice.tsx",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/hooks/useAdminSession.ts",
+          "frontend/src/utils/adminSession.ts",
+          "frontend/src/hooks/useQueries.ts",
+          "frontend/src/pages/AdminDashboard.tsx",
+          "frontend/src/pages/AdminSubmissionDetail.tsx",
+          "frontend/src/App.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Remove the 'Built with caffeine.ai' attribution element from the bottom of the UI so it no longer appears in the app footer.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/AppLayout.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/AppLayout.tsx"
-        ]
+        "summary": "Add backend support to reliably establish at least one admin principal (bootstrap) and to check admin authorization in a way the frontend can use, without relying on frontend-only hardcoded credentials.",
+        "status": "unknown",
+        "plannedFiles": [],
+        "matchedFiles": []
       },
       {
         "id": "REQ-3",
-        "summary": "Ensure any user-facing backend connectivity error messages are in English and remain user-friendly (no raw technical stack traces shown in the UI).",
+        "summary": "Update the frontend admin login and admin page gating so that admin access is tied to the authenticated Internet Identity principal (not just sessionStorage credentials), and present clear recovery actions when authorization fails.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/backendErrors.ts",
+          "frontend/src/pages/LoginChoice.tsx",
           "frontend/src/hooks/useBackendActor.ts",
-          "frontend/src/pages/UserChecklist.tsx"
+          "frontend/src/utils/backendErrors.ts",
+          "frontend/src/components/AppHeader.tsx",
+          "frontend/src/hooks/useAdminBootstrap.ts",
+          "frontend/src/pages/AdminDashboard.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/utils/backendErrors.ts",
-          "frontend/src/hooks/useBackendActor.ts",
-          "frontend/src/pages/UserChecklist.tsx"
+          "frontend/src/pages/LoginChoice.tsx",
+          "frontend/src/components/AppHeader.tsx",
+          "frontend/src/pages/AdminDashboard.tsx"
         ]
       }
     ]
@@ -60,18 +65,15 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/components/AppLayout.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useBackendActor.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/components/AppHeader.tsx",
+    "frontend/src/hooks/useAdminAuthorization.ts",
+    "frontend/src/hooks/useAdminSession.ts",
     "frontend/src/hooks/useQueries.ts",
     "frontend/src/pages/AdminDashboard.tsx",
     "frontend/src/pages/AdminSubmissionDetail.tsx",
     "frontend/src/pages/LoginChoice.tsx",
-    "frontend/src/pages/UserChecklist.tsx",
-    "frontend/src/utils/backendErrors.ts",
+    "frontend/src/utils/adminSession.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

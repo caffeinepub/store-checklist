@@ -3,7 +3,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import { clearAdminSession, clearAdminRedirectMessage } from '../utils/adminSession';
 
 export default function AppHeader() {
   const { identity, clear } = useInternetIdentity();
@@ -13,8 +12,6 @@ export default function AppHeader() {
   const handleLogout = async () => {
     await clear();
     queryClient.clear();
-    clearAdminSession();
-    clearAdminRedirectMessage();
     navigate({ to: '/' });
   };
 

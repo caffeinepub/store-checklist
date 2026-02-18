@@ -7,7 +7,6 @@ import UserChecklist from './pages/UserChecklist';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSubmissionDetail from './pages/AdminSubmissionDetail';
 import AppLayout from './components/AppLayout';
-import { clearAdminSession, clearAdminRedirectMessage } from './utils/adminSession';
 
 // Root layout component
 function RootLayout() {
@@ -15,12 +14,10 @@ function RootLayout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Clear cache and admin session when identity changes
+  // Clear cache when identity changes (logout)
   useEffect(() => {
     if (!identity) {
       queryClient.clear();
-      clearAdminSession();
-      clearAdminRedirectMessage();
       navigate({ to: '/' });
     }
   }, [identity, queryClient, navigate]);

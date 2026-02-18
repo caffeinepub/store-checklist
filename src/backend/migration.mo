@@ -1,14 +1,10 @@
 import Map "mo:core/Map";
+import Text "mo:core/Text";
 import Principal "mo:core/Principal";
-import Int "mo:core/Int";
 import Storage "blob-storage/Storage";
 
 module {
-  // The old actor type includes the admin credentials that were removed in the new version
   type OldActor = {
-    adminUserId : Text;
-    adminPassword : Text;
-    userProfiles : Map.Map<Principal, { name : Text }>;
     checklistEntries : Map.Map<Text, {
       id : Text;
       storeName : Text;
@@ -19,11 +15,10 @@ module {
         photo : ?Storage.ExternalBlob;
       }];
     }>;
+    userProfiles : Map.Map<Principal, { name : Text }>;
   };
 
-  // The new actor type excludes the admin credentials
-  type NewActor = {
-    userProfiles : Map.Map<Principal, { name : Text }>;
+  public type NewActor = {
     checklistEntries : Map.Map<Text, {
       id : Text;
       storeName : Text;
@@ -34,13 +29,13 @@ module {
         photo : ?Storage.ExternalBlob;
       }];
     }>;
+    userProfiles : Map.Map<Principal, { name : Text }>;
   };
 
   public func run(old : OldActor) : NewActor {
-    // Simply drop the admin credential variables during migration
     {
-      userProfiles = old.userProfiles;
       checklistEntries = old.checklistEntries;
+      userProfiles = old.userProfiles;
     };
   };
 };

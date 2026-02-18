@@ -1,69 +1,61 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T10:54:38.537Z",
-  "summary": "REQ-1/2/3 appear largely implemented: backend exposes ping->\"pong\"; frontend introduces a backend-actor wrapper hook with retry/health-check and user-friendly English error messaging; footer attribution was removed. However, the diff also introduces several unrequested changes (styling overhaul, admin bootstrap/session behaviors, and a migration/state/auth refactor) that go beyond the stated non-goals.",
-  "missing_requirements": [],
-  "hallucinated_features": [
+  "generatedAt": "2026-02-18T11:10:39.222Z",
+  "summary": "Diff implements frontend admin gating using Internet Identity principal via a new useAdminAuthorization hook and gates admin data queries accordingly; backend admin-only endpoints are guarded. However, backend admin bootstrap/initial admin establishment is not clearly evidenced in the provided backend diff, and several unrequested changes (migration module, broad styling/theme updates, and sessionStorage admin-session utilities) appear to be introduced.",
+  "missing_requirements": [
     {
-      "description": "Glassmorphism/design-system styling overhaul across many frontend components (layout/header/cards/modals, global CSS, Tailwind config)",
-      "reason": "BuildRequest focuses on restoring backend connectivity and removing the caffeine.ai footer regression; it explicitly lists 'Adding new product features beyond restoring backend connectivity and removing the caffeine.ai footer attribution' as a non-goal, and a broad styling redesign is not requested.",
+      "id": "REQ-2",
+      "requirement": "Add backend support to reliably establish at least one admin principal (bootstrap) and expose an admin-check query aligned with backend authorization.",
+      "reason": "The backend diff shows admin guarding via authorizationGuard(#admin, caller) and inclusion of authorization mixins, but does not show any deterministic bootstrap/initial-admin establishment mechanism (e.g., one-time first-admin assignment) nor an explicit hasAdminRole/initialize implementation in backend/main.mo (may exist in truncated or included mixin, but not evidenced in the diff summary).",
       "evidence": [
-        "frontend-file-summaries.txt",
-        "frontend/src/index.css",
-        "frontend/tailwind.config.js",
-        "frontend/src/components/AppHeader.tsx",
-        "frontend/src/components/ChecklistItemCard.tsx",
-        "frontend/src/components/CameraCaptureModal.tsx",
-        "frontend/src/components/ProfileSetupModal.tsx"
-      ]
-    },
-    {
-      "description": "Admin bootstrap functionality that calls a backend initialize() method to make the first authenticated user an admin",
-      "reason": "Not requested in any requirement; also potentially changes authorization/admin behavior beyond connectivity and footer removal.",
-      "evidence": [
-        "frontend-file-summaries.txt (mentions frontend/src/hooks/useAdminBootstrap.ts)"
-      ]
-    },
-    {
-      "description": "Admin session/credentials feature using sessionStorage utilities and hooks (adminSession.ts, useAdminSession.ts)",
-      "reason": "Not requested by the BuildRequest; introduces additional behavior around admin auth/session management beyond restoring connectivity and removing attribution.",
-      "evidence": [
-        "frontend-file-summaries.txt (mentions frontend/src/utils/adminSession.ts, frontend/src/hooks/useAdminSession.ts)",
-        "frontend/src/pages/AdminDashboard.tsx",
-        "frontend/src/pages/AdminSubmissionDetail.tsx",
-        "frontend/src/pages/LoginChoice.tsx"
-      ]
-    },
-    {
-      "description": "Backend state migration module that removes stored admin credentials from persistent state during upgrade",
-      "reason": "Not requested; changes data model/state upgrade behavior beyond connectivity restoration.",
-      "evidence": [
-        "backend/migration.mo",
-        "backend/main.mo (\"with migration = Migration.run\")"
-      ]
-    },
-    {
-      "description": "Backend authorization/access-control integration and new admin-guarded entry listing APIs",
-      "reason": "Not requested in the BuildRequest and may alter backend behavior beyond connection repair (introduces authorization guards and role checks).",
-      "evidence": [
-        "backend/main.mo (imports authorization/access-control, MixinAuthorization; uses authorizationGuard; hasAdminRole)"
+        "backend/main.mo (truncated, shows authorizationGuard usage but no bootstrap/init flow visible)"
       ]
     }
   ],
-  "confidence": 0.72,
+  "hallucinated_features": [
+    {
+      "description": "Added a backend migration module and wired migration into the main actor.",
+      "reason": "The BuildRequest is focused on fixing admin auth flow and authorization checks; it does not request data migration infrastructure.",
+      "evidence": [
+        "backend/migration.mo",
+        "backend/main.mo (\"import Migration \\\"migration\\\"\" and \"(with migration = Migration.run)\")"
+      ]
+    },
+    {
+      "description": "Broad visual/theme changes (\"glassmorphism\" design system, tailwind config changes, and styling updates across multiple pages/components).",
+      "reason": "Explicit non-goal: changing the visual theme/styling beyond what is necessary to support the fixed admin flow and error states.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions glassmorphism styling across many components/pages)",
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js",
+        "frontend/src/pages/UserChecklist.tsx (mentioned in summaries as styling-focused)"
+      ]
+    },
+    {
+      "description": "SessionStorage-based admin session utilities/hooks retained/introduced (admin credentials storage).",
+      "reason": "REQ-3 requires admin access tied to the authenticated Internet Identity principal (not sessionStorage credentials). Keeping dedicated sessionStorage admin-credential management is not requested and may conflict with the intended source of truth.",
+      "evidence": [
+        "frontend/src/utils/adminSession.ts",
+        "frontend/src/hooks/useAdminSession.ts",
+        "frontend-file-summaries.txt (describes these files as managing admin credentials in sessionStorage)"
+      ]
+    }
+  ],
+  "confidence": 0.66,
   "changed_files": [
     "backend/main.mo",
     "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/AppLayout.tsx",
-    "frontend/src/hooks/useBackendActor.ts",
+    "frontend/src/App.tsx",
+    "frontend/src/components/AppHeader.tsx",
+    "frontend/src/hooks/useAdminAuthorization.ts",
+    "frontend/src/hooks/useAdminSession.ts",
     "frontend/src/hooks/useQueries.ts",
     "frontend/src/pages/AdminDashboard.tsx",
     "frontend/src/pages/AdminSubmissionDetail.tsx",
     "frontend/src/pages/LoginChoice.tsx",
-    "frontend/src/pages/UserChecklist.tsx",
-    "frontend/src/utils/backendErrors.ts",
+    "frontend/src/utils/adminSession.ts",
     "project_state.json"
   ]
 }

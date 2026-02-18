@@ -3,7 +3,7 @@ import { useBackendActor } from './useBackendActor';
 import type { StoreChecklistEntry, ChecklistItem, UserProfile } from '../backend';
 import { ExternalBlob } from '../backend';
 import { normalizeBackendError, isRetryableError } from '../utils/backendErrors';
-import { useAdminSession } from './useAdminSession';
+import { useAdminAuthorization } from './useAdminAuthorization';
 
 // User profile queries
 export function useGetCallerUserProfile() {
@@ -89,10 +89,10 @@ export function useCreateChecklistEntry() {
   });
 }
 
-// Admin queries
+// Admin queries - now gated by actual backend admin authorization
 export function useGetAllChecklistEntries() {
   const { actor, actorReady, checkHealth } = useBackendActor();
-  const { isAdminSessionActive } = useAdminSession();
+  const { isAdmin, isCheckingAdmin } = useAdminAuthorization();
 
   return useQuery<StoreChecklistEntry[]>({
     queryKey: ['checklistEntries'],
@@ -106,7 +106,7 @@ export function useGetAllChecklistEntries() {
         throw new Error(normalizedMessage);
       }
     },
-    enabled: actorReady && isAdminSessionActive(),
+    enabled: actorReady && !isCheckingAdmin && isAdmin,
     retry: (failureCount, error) => {
       if (!isRetryableError(error)) return false;
       return failureCount < 2;
@@ -116,7 +116,7 @@ export function useGetAllChecklistEntries() {
 
 export function useGetAllEntriesSortedByNewest() {
   const { actor, actorReady, checkHealth } = useBackendActor();
-  const { isAdminSessionActive } = useAdminSession();
+  const { isAdmin, isCheckingAdmin } = useAdminAuthorization();
 
   return useQuery<StoreChecklistEntry[]>({
     queryKey: ['checklistEntries', 'sorted', 'newest'],
@@ -130,7 +130,7 @@ export function useGetAllEntriesSortedByNewest() {
         throw new Error(normalizedMessage);
       }
     },
-    enabled: actorReady && isAdminSessionActive(),
+    enabled: actorReady && !isCheckingAdmin && isAdmin,
     retry: (failureCount, error) => {
       if (!isRetryableError(error)) return false;
       return failureCount < 2;
@@ -140,7 +140,7 @@ export function useGetAllEntriesSortedByNewest() {
 
 export function useGetEntry(entryId: string) {
   const { actor, actorReady, checkHealth } = useBackendActor();
-  const { isAdminSessionActive } = useAdminSession();
+  const { isAdmin, isCheckingAdmin } = useAdminAuthorization();
 
   return useQuery<StoreChecklistEntry | null>({
     queryKey: ['checklistEntry', entryId],
@@ -154,7 +154,7 @@ export function useGetEntry(entryId: string) {
         throw new Error(normalizedMessage);
       }
     },
-    enabled: actorReady && isAdminSessionActive() && !!entryId,
+    enabled: actorReady && !isCheckingAdmin && isAdmin && !!entryId,
     retry: (failureCount, error) => {
       if (!isRetryableError(error)) return false;
       return failureCount < 2;

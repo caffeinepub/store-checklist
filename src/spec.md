@@ -1,13 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Restore stable frontend-to-backend connectivity and remove the reappearing caffeine.ai footer attribution.
+**Goal:** Fix the admin authentication/authorization flow so an admin can log in with Internet Identity and successfully access the Admin Dashboard without permission errors, while keeping admin data protected fromanalysis.
 
-**Planned changes:**
-- Fix the frontend connection flow so it can reliably create the backend actor, reach a stable connected state, and successfully call the backend health endpoint (ping/pong).
-- Restore the post–Internet Identity login flow so navigation to `/checklist` works and the caller profile query loads without connection failures.
-- Add/adjust a clear, user-friendly Retry-based error state for cases where the backend is actually unreachable (no full page reload required).
-- Remove the “Built with caffeine.ai” attribution from the footer across all routes and ensure no awkward leftover spacing.
-- Ensure any user-visible backend connectivity errors are short, user-friendly English messages (no raw stack traces in the UI).
+**Planned changes.text:**
+- Align backend admin authorization checks with a reliable admin bootstrap/assignment mechanism so at least one admin principal canfinal be established and verified.
+- Ensure backend exposes a clear “is current caller an admin” query that matches the authorization enforced by admin-only methods.
+- Update frontend admin login so admin access is tied to the authenticated Internet Identity principal (not sessionStorage-only credentials).
+- Gate /admin routes and admin data queries until an authenticated session is active and admin authorization has been confirmed.
+- Improve Admin Dashboard error handling to distinguish permission vs connectivity issues, provide clear recovery actions, and ensure Retry retries the correct step without looping.
 
-**User-visible outcome:** Users can log in with Internet Identity, the app connects to the backend without a persistent “Connecting…” state, `/checklist` loads successfully, backend outages show a clear English error with a Retry option, and the footer no longer shows any caffeine.ai attribution.
+**User-visible outcome:** After signing in with Internet Identity as an authorized admin, the Admin Dashboard loads submissions successfully; non-admin users see a clear message indicating lack of permission and can return to login/re-authenticate without exposing admin-only data.

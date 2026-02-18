@@ -2,12 +2,15 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-frontend-to-backend-connection-so-the-app-can-successfully-create-a-backend-actor-and-call-the-backend-without-showing-a-persistent-connection-error",
-      "featureTitle": "Fix the frontend-to-backend connection so the app can successfully create a backend actor and call the backend without showing a persistent connection error.",
+      "featureId": "feature-fix-the-admin-authentication-authorization-flow-so-that-an-admin-who-logs-in-can-successfully-load-admin-dashboard-data-without-receiving-an-authorization-permission-error",
+      "featureTitle": "Fix the admin authentication/authorization flow so that an admin who logs in can successfully load Admin Dashboard data without receiving an authorization/permission error.",
       "files": [
-        "frontend/src/hooks/useBackendActor.ts",
+        "frontend/src/App.tsx",
+        "frontend/src/hooks/useAdminSession.ts",
         "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/LoginChoice.tsx"
+        "frontend/src/pages/AdminDashboard.tsx",
+        "frontend/src/pages/AdminSubmissionDetail.tsx",
+        "frontend/src/utils/adminSession.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -25,33 +28,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-remove-the-built-with-caffeine-ai-attribution-element-from-the-bottom-of-the-ui-so-it-no-longer-appears-in-the-app-footer",
-      "featureTitle": "Remove the 'Built with caffeine.ai' attribution element from the bottom of the UI so it no longer appears in the app footer.",
+      "featureId": "feature-update-the-frontend-admin-login-and-admin-page-gating-so-that-admin-access-is-tied-to-the-authenticated-internet-identity-principal-not-just-sessionstorage-credentials-and-present-clear-recovery-actions-when-authorization-fails",
+      "featureTitle": "Update the frontend admin login and admin page gating so that admin access is tied to the authenticated Internet Identity principal (not just sessionStorage credentials), and present clear recovery actions when authorization fails.",
       "files": [
-        "frontend/src/components/AppLayout.tsx"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "blob-storage@4.0.0",
-        "camera@1.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-any-user-facing-backend-connectivity-error-messages-are-in-english-and-remain-user-friendly-no-raw-technical-stack-traces-shown-in-the-ui",
-      "featureTitle": "Ensure any user-facing backend connectivity error messages are in English and remain user-friendly (no raw technical stack traces shown in the UI).",
-      "files": [
-        "frontend/src/hooks/useBackendActor.ts",
-        "frontend/src/pages/UserChecklist.tsx",
-        "frontend/src/utils/backendErrors.ts"
+        "frontend/src/components/AppHeader.tsx",
+        "frontend/src/pages/AdminDashboard.tsx",
+        "frontend/src/pages/LoginChoice.tsx"
       ],
       "components": [
         "authorization@4.0.0",
