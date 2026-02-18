@@ -1,0 +1,26 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Admin Dashboard client-side filters (store name + date)",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Add client-side Store Name and Submitted Date filters (with reset) above the Admin Dashboard submissions table without altering existing dashboard behavior, ordering, or admin/session flows.",
+      "acceptanceCriteria": [
+        "Admin Dashboard (frontend/src/pages/AdminDashboard.tsx) displays filter controls above the submissions table for: Store Name and Date (user-facing labels in English).",
+        "Store Name filter supports typing a value and filters the visible table rows based on entry.storeName (case-insensitive match is acceptable).",
+        "Date filter allows selecting a date and filters visible table rows to entries whose timestamp falls on that selected calendar date (based on local time as used by existing toLocaleString formatting).",
+        "A clear/reset action is available to return to showing all submissions.",
+        "When no filters are set, the table shows the same entries in the same order as before (newest-first from the existing query).",
+        "Filtering is client-side only (does not require new backend calls) and does not change existing error handling, loading states, navigation to submission detail, or admin session redirect behavior."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/AdminDashboard.tsx",
+          "operation": "modify",
+          "description": "Implement a filter UI placed above the submissions table with English labels for Store Name (text input) and Date (date picker input), plus a Clear/Reset action. Add local component state for the active filters and derive a filteredEntries list (client-side only) from the existing entries query results. Store Name filtering should be case-insensitive against entry.storeName; Date filtering should match entries occurring on the selected local calendar date computed from the existing timestamp conversion used by toLocaleString. Ensure that when filters are empty, the component renders the original entries array unchanged (preserving the existing newest-first order and all current loading/error/session-redirect behavior and navigation to submission detail). Use existing UI components already used in the project (e.g., Input/Label/Button from the current UI library) without modifying any files under frontend/src/components/ui."
+        }
+      ]
+    }
+  ]
+}

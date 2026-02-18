@@ -1,0 +1,26 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-add-a-filter-ui-to-the-admin-dashboard-that-allows-admins-to-narrow-the-submissions-table-by-1-store-name-and-2-submitted-date-without-changing-any-other-dashboard-behavior",
+      "featureTitle": "Add a filter UI to the Admin Dashboard that allows admins to narrow the submissions table by (1) store name and (2) submitted date, without changing any other dashboard behavior.",
+      "files": [
+        "frontend/src/pages/AdminDashboard.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

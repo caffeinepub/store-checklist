@@ -1,0 +1,14 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-18T08:38:40.385Z",
+  "summary": "The diff adds client-side filter state and memoized filtering logic to AdminDashboard for store name (case-insensitive substring match) and submitted date (calendar-day match in local time), including a clear/reset function. The render/UI portion is truncated, so the presence/placement of the actual filter controls and clear action in the visible UI cannot be fully verified from the provided excerpt.",
+  "missing_requirements": [],
+  "hallucinated_features": [],
+  "confidence": 0.63,
+  "changed_files": [
+    "frontend-file-summaries.txt",
+    "frontend/src/pages/AdminDashboard.tsx",
+    "project_state.json"
+  ]
+}

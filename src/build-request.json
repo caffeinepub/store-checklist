@@ -1,0 +1,54 @@
+{
+  "kind": "build_request",
+  "title": "Add Admin Dashboard filters for date and store name",
+  "projectName": "Store Checklist Pro",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Add a filter UI to the Admin Dashboard that allows admins to narrow the submissions table by (1) store name and (2) submitted date, without changing any other dashboard behavior.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-user-1"
+        ],
+        "quotes": [
+          "In Dashboard give a Filter to see by date, store name but do not touch any other part of application do not mess with Admin credentials keep everything as same as it is just add one Filter or sort option as required rest everything will remain same"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Admin Dashboard (frontend/src/pages/AdminDashboard.tsx) displays filter controls above the submissions table for: Store Name and Date (user-facing labels in English).",
+        "Store Name filter supports typing a value and filters the visible table rows based on entry.storeName (case-insensitive match is acceptable).",
+        "Date filter allows selecting a date and filters visible table rows to entries whose timestamp falls on that selected calendar date (based on local time as used by existing toLocaleString formatting).",
+        "A clear/reset action is available to return to showing all submissions.",
+        "When no filters are set, the table shows the same entries in the same order as before (newest-first from the existing query).",
+        "Filtering is client-side only (does not require new backend calls) and does not change existing error handling, loading states, navigation to submission detail, or admin session redirect behavior."
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not change or invalidate the shared Admin credentials model; specifically do not change backend/main.mo adminUserId/adminPassword values (\"Admin\"/\"Admin\") or the frontend credential validation behavior.",
+    "Do not modify any routes, login flows, admin session storage/clearing behavior, or backend query/mutation APIs beyond what is required to filter the Admin Dashboard list view.",
+    "Do not edit files under frontend/src/components/ui or any other frontend immutable paths listed in SYSTEM_CONTEXT.",
+    "Use English for any user-facing text added."
+  ],
+  "nonGoals": [
+    "Adding new admin roles, permissions, or authentication mechanisms.",
+    "Changing how submissions are created, stored, or sorted on the backend.",
+    "Adding filters to AdminSubmissionDetail or other pages."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
+  }
+}

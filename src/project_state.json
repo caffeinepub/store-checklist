@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Add a dashboard filter/sort option to view entries by date and store name, keeping the rest of the application unchanged (including Admin credentials).",
+  "architectural_notes": [
+    "Do not modify any other parts of the application; specifically do not change Admin credentials. Only add the requested Dashboard filter/sort."
+  ],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-add-a-filter-ui-to-the-admin-dashboard-that-allows-admins-to-narrow-the-submissions-table-by-1-store-name-and-2-submitted-date-without-changing-any-other-dashboard-behavior",
+      "title": "Add a filter UI to the Admin Dashboard that allows admins to narrow the submissions table by (1) store name and (2) submitted date, without changing any other dashboard behavior.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Add Dashboard filter/sort option to view by date and store name; do not change any other app behavior or Admin credentials.",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Store Checklist Pro",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

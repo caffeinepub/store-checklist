@@ -1,0 +1,153 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useBackendActor } from './useBackendActor';
+import type { StoreChecklistEntry, ChecklistItem, UserProfile } from '../backend';
+import { ExternalBlob } from '../backend';
+import { normalizeBackendError, isInvalidCredentialsError, isBackendUnavailableError } from '../utils/backendErrors';
+import { useAdminSession } from './useAdminSession';
+
+// User profile queries
+export function useGetCallerUserProfile() {
+  const { actor, actorReady, actorLoading } = useBackendActor();
+
+  const query = useQuery<UserProfile | null>({
+    queryKey: ['currentUserProfile'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      try {
+        return await actor.getCallerUserProfile();
+      } catch (error) {
+        throw new Error(normalizeBackendError(error));
+      }
+    },
+    enabled: actorReady,
+    retry: false,
+  });
+
+  return {
+    ...query,
+    isLoading: actorLoading || query.isLoading,
+    isFetched: actorReady && query.isFetched,
+  };
+}
+
+export function useSaveCallerUserProfile() {
+  const { actor, actorReady } = useBackendActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (profile: UserProfile) => {
+      if (!actor || !actorReady) {
+        throw new Error('Connecting to backend service...');
+      }
+      try {
+        return await actor.saveCallerUserProfile(profile);
+      } catch (error) {
+        throw new Error(normalizeBackendError(error));
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
+  });
+}
+
+// Checklist entry mutations
+export function useCreateChecklistEntry() {
+  const { actor, actorReady } = useBackendActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ storeName, items }: { storeName: string; items: Array<{ name: string; photo: Uint8Array }> }) => {
+      if (!actor || !actorReady) {
+        throw new Error('Connecting to backend service...');
+      }
+
+      try {
+        const backendItems: ChecklistItem[] = items.map(item => ({
+          name: item.name,
+          photo: ExternalBlob.fromBytes(item.photo as Uint8Array<ArrayBuffer>)
+        }));
+
+        return await actor.createChecklistEntry(storeName, backendItems);
+      } catch (error) {
+        throw new Error(normalizeBackendError(error));
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['checklistEntries'] });
+    },
+  });
+}
+
+// Admin queries - these require admin credentials to be passed to the backend
+export function useGetAllEntriesSortedByNewest() {
+  const { actor, actorReady, actorLoading } = useBackendActor();
+  const { credentials } = useAdminSession();
+
+  return useQuery<StoreChecklistEntry[]>({
+    queryKey: ['checklistEntries', 'all', 'sorted'],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      if (!credentials) throw new Error('Admin credentials required');
+      
+      try {
+        return await actor.getAllEntriesSortedByNewestEntries(credentials.userId, credentials.password);
+      } catch (error) {
+        // Preserve the original error for credential checking, but normalize the message
+        const normalized = normalizeBackendError(error);
+        const newError = new Error(normalized);
+        // Attach original error for debugging
+        (newError as any).originalError = error;
+        throw newError;
+      }
+    },
+    enabled: actorReady && !!credentials,
+    retry: (failureCount, error) => {
+      // Don't retry on invalid credentials
+      if (isInvalidCredentialsError(error)) {
+        return false;
+      }
+      // Don't retry too many times on backend unavailable
+      if (isBackendUnavailableError(error)) {
+        return failureCount < 2;
+      }
+      return failureCount < 2;
+    },
+  });
+}
+
+export function useGetEntry(entryId: string) {
+  const { actor, actorReady, actorLoading } = useBackendActor();
+  const { credentials } = useAdminSession();
+
+  return useQuery<StoreChecklistEntry | null>({
+    queryKey: ['checklistEntry', entryId],
+    queryFn: async () => {
+      if (!actor) throw new Error('Actor not available');
+      if (!credentials) throw new Error('Admin credentials required');
+      
+      try {
+        return await actor.getEntry(credentials.userId, credentials.password, entryId);
+      } catch (error) {
+        // Preserve the original error for credential checking, but normalize the message
+        const normalized = normalizeBackendError(error);
+        const newError = new Error(normalized);
+        // Attach original error for debugging
+        (newError as any).originalError = error;
+        throw newError;
+      }
+    },
+    enabled: actorReady && !!credentials && !!entryId,
+    retry: (failureCount, error) => {
+      // Don't retry on invalid credentials
+      if (isInvalidCredentialsError(error)) {
+        return false;
+      }
+      // Don't retry too many times on backend unavailable
+      if (isBackendUnavailableError(error)) {
+        return failureCount < 2;
+      }
+      return failureCount < 2;
+    },
+  });
+}
