@@ -11,33 +11,50 @@ export interface UseAdminAuthorizationReturn {
 
 /**
  * Hook that checks if the current Internet Identity principal has admin role.
- * This is the source of truth for admin authorization in the frontend.
+ * Includes actorVersion in query key to re-check after actor recreation.
+ * Provides better error handling to distinguish connectivity issues from authorization failures.
  */
 export function useAdminAuthorization(): UseAdminAuthorizationReturn {
-  const { actor, actorReady } = useBackendActor();
+  const { actor, actorReady, actorVersion } = useBackendActor();
   const { identity } = useInternetIdentity();
 
   const query = useQuery<boolean>({
-    queryKey: ['adminAuthorization', identity?.getPrincipal().toString()],
+    queryKey: ['adminAuthorization', identity?.getPrincipal().toString(), actorVersion],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) {
+        console.log('Admin check: actor not available');
+        throw new Error('Backend actor not available');
+      }
       try {
-        return await actor.hasAdminRole();
+        const result = await actor.hasAdminRole();
+        console.log('Admin check result:', result);
+        return result;
       } catch (error) {
         console.error('Admin authorization check failed:', error);
-        // If the check fails, assume not admin (fail closed)
-        return false;
+        // Re-throw to let React Query handle it
+        throw error;
       }
     },
     enabled: !!actor && actorReady && !!identity,
-    retry: false,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: 1, // Retry once on failure
+    staleTime: 30 * 1000, // 30 seconds - allow re-checks after actor recreation
   });
+
+  // Determine if this is a connectivity error vs authorization failure
+  let adminCheckError: string | null = null;
+  if (query.isError) {
+    const errorMessage = query.error instanceof Error ? query.error.message : 'Unknown error';
+    if (errorMessage.includes('not available') || errorMessage.includes('network')) {
+      adminCheckError = 'Unable to verify admin status. Please check your connection.';
+    } else {
+      adminCheckError = 'Failed to verify admin status';
+    }
+  }
 
   return {
     isAdmin: query.data === true,
     isCheckingAdmin: query.isLoading || query.isFetching,
-    adminCheckError: query.error ? String(query.error) : null,
+    adminCheckError,
     refetchAdminStatus: async () => {
       await query.refetch();
     },

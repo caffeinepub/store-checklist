@@ -1,88 +1,146 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Protect — Fix admin dashboard permission error after admin login (frontend-only)",
+  "title": "Fix Backend Connection Error and Eliminate All Errors",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Ensure the frontend only runs admin dashboard queries when the current Internet Identity principal is authenticated and authorized as admin, preventing spurious permission errors after admin login.",
+      "summary": "Debug and fix the 'Unable to connect to backend' error by improving actor initialization, error handling, and connection diagnostics",
       "acceptanceCriteria": [
-        "After completing the admin login flow, the Admin Dashboard successfully loads submissions when the logged-in principal has admin access (no 'You do not have permission to perform this action.' error).",
-        "If the current caller is not an admin, admin-only backend calls (e.g., getAllEntriesSortedByNewestEntries, getEntry) remain protected and do not expose data.",
-        "Admin-only pages do not attempt admin queries unless the app has validated that an admin session is active AND the caller is authorized as admin."
+        "The frontend successfully connects to the backend canister without connection errors",
+        "The useBackendActor hook returns a valid actor instance",
+        "Backend canister responds to health check or basic queries",
+        "No 'Unable to connect to backend' errors appear in the browser console or UI"
       ],
       "file_operations": [
-        {
-          "path": "frontend/src/hooks/useAdminSession.ts",
-          "operation": "modify",
-          "description": "Refactor admin session state to be principal/identity-based (derived from Internet Identity) rather than sessionStorage credentials; store only non-sensitive UI state (e.g., last known admin check result, redirect message) needed for UX. Verify the component's usage instructions before implementing (authorization: principal-based auth expectations)."
-        },
-        {
-          "path": "frontend/src/utils/adminSession.ts",
-          "operation": "modify",
-          "description": "Update session utilities to remove/ignore any hardcoded admin credential storage and instead support storing a lightweight admin access state (e.g., last check timestamp/result) and redirect/recovery messages without granting access by itself."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Gate admin React Query hooks behind an explicit 'isAdmin' check sourced from backend role queries (e.g., isCallerAdmin/hasAdminRole), and ensure admin data queries are disabled until actor is ready AND admin authorization has been confirmed. Verify the component's usage instructions before implementing (authorization: call backend role check and handle traps gracefully)."
-        },
-        {
-          "path": "frontend/src/pages/AdminDashboard.tsx",
-          "operation": "modify",
-          "description": "Change dashboard load flow to: (1) require authenticated identity, (2) confirm admin authorization, then (3) fetch submissions; prevent calling admin queries when unauthorized, and show an actionable Access Denied state with a clear return-to-login action when not admin."
-        },
-        {
-          "path": "frontend/src/pages/AdminSubmissionDetail.tsx",
-          "operation": "modify",
-          "description": "Apply the same admin gating as AdminDashboard for per-entry admin reads; do not attempt getEntry unless identity is authenticated and admin is confirmed; show actionable unauthorized vs connectivity error states."
-        },
-        {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Add/adjust route guarding for /admin routes so navigation does not proceed to admin pages until Internet Identity is authenticated and admin authorization is confirmed; if not authorized, redirect to the login screen with a clear message (no admin queries attempted pre-authorization)."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Update admin login UX and error/retry handling so admin access is tied to the authenticated Internet Identity principal and authorization failures provide clear recovery actions without endless retry loops.",
-      "acceptanceCriteria": [
-        "Admin login flow ensures the user is authenticated with Internet Identity before navigating to /admin routes and attempting admin queries.",
-        "If the caller is not authorized as admin, the UI shows a clear message explaining that the signed-in identity lacks admin permission and provides a way to return to the login screen (and/or re-authenticate).",
-        "Retry on Admin Dashboard retries the correct failing step (backend actor init vs query refetch) and does not loop endlessly on authorization failures.",
-        "The displayed error on Admin Dashboard is actionable and not misleading (distinguish permission errors from connectivity errors)."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/LoginChoice.tsx",
-          "operation": "modify",
-          "description": "Revise the admin login choice flow to require Internet Identity authentication first, then verify admin authorization using backend role checks before routing to /admin; remove any frontend-only credential-based admin granting. Verify the component's usage instructions before implementing (authorization: Internet Identity principal + role-based access control)."
-        },
         {
           "path": "frontend/src/hooks/useBackendActor.ts",
           "operation": "modify",
-          "description": "Ensure actor readiness/health checks integrate cleanly with admin authorization checks; expose enough state to let pages decide whether Retry should re-init actor/identity vs refetch data, and avoid repeated retries on authorization failures."
+          "description": "Enhance useBackendActor hook to add comprehensive error handling, connection state tracking, and detailed error messages. Add retry logic with exponential backoff for transient connection failures. Include connection diagnostics that log actor initialization state, canister ID, and network status. Ensure the hook properly tracks actor readiness and exposes clear error states to consuming components."
         },
         {
           "path": "frontend/src/utils/backendErrors.ts",
           "operation": "modify",
-          "description": "Improve error normalization so authorization/permission traps are categorized distinctly from connectivity/timeouts; provide stable error codes/messages that admin pages can use to display actionable guidance in English."
+          "description": "Expand error classification to include specific connection error types (DNS resolution, canister not found, network timeout, certificate validation). Add actionable error messages for each error type with suggested fixes. Include helper functions to extract error details from IC agent errors and format them for user display."
         },
         {
-          "path": "frontend/src/components/AppHeader.tsx",
-          "operation": "modify",
-          "description": "On logout, clear any cached admin-authorization state and related query cache so subsequent users/principals do not inherit stale admin UI state; keep behavior aligned with identity-based session. Verify the component's usage instructions before implementing (authorization: clear cached data on logout)."
+          "path": "frontend/src/components/ConnectionErrorBoundary.tsx",
+          "operation": "create",
+          "description": "Create an error boundary component that catches backend connection errors and displays a user-friendly error screen with retry options. Show diagnostic information including error type, suggested fixes, and a manual retry button. This component wraps the main application content to handle connection failures gracefully."
         },
         {
-          "path": "frontend/src/hooks/useAdminBootstrap.ts",
+          "path": "frontend/src/App.tsx",
           "operation": "modify",
-          "description": "Implement a small frontend hook responsible for: running the admin authorization check (e.g., call isCallerAdmin/hasAdminRole once actor+identity are ready), caching the result for the session, and providing a single 'retry' that re-runs the correct step without infinite loops. Verify the component's usage instructions before implementing (authorization: role check should reflect backend enforcement)."
+          "description": "Wrap the RouterProvider with ConnectionErrorBoundary to catch and handle backend connection errors at the application root level. Ensure the error boundary is positioned correctly in the component tree to intercept errors from useBackendActor hook."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Verify and validate canister ID configuration in the frontend environment",
+      "acceptanceCriteria": [
+        "Frontend references the correct canister ID for the backend",
+        "Canister ID environment variables or configuration files are properly set",
+        "Actor initialization uses the correct canister ID"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/canisterConfig.ts",
+          "operation": "create",
+          "description": "Create a utility module that validates canister ID configuration on application startup. Check for required environment variables (CANISTER_ID_BACKEND, DFX_NETWORK). Log canister configuration details to console for debugging. Provide helper functions to retrieve and validate canister IDs. Include network detection (local vs mainnet) and appropriate host configuration."
+        },
+        {
+          "path": "frontend/src/main.tsx",
+          "operation": "modify",
+          "description": "Import and invoke canister configuration validation from canisterConfig.ts before rendering the React application. Log validation results to console. If critical configuration is missing, display a warning banner but allow the app to continue loading so users can see error messages."
+        },
+        {
+          "path": "frontend/src/components/ConfigurationWarning.tsx",
+          "operation": "create",
+          "description": "Create a warning banner component that displays when canister configuration is missing or invalid. Show the expected environment variables and current values (redacted if sensitive). Provide guidance on how to fix configuration issues. This component should be rendered conditionally in App.tsx when configuration validation fails."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Implement comprehensive error handling in useBackendActor with clear, actionable error messages",
+      "acceptanceCriteria": [
+        "Error messages clearly indicate the type of connection failure",
+        "Users see actionable error messages with suggested fixes",
+        "Error logging captures connection failure details for debugging"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useBackendActor.ts",
+          "operation": "modify",
+          "description": "Add detailed error state management to track connection errors, actor initialization failures, and network issues. Include error logging that captures full error context (stack trace, canister ID, network, timestamp). Expose error state and retry function to consuming components. Implement connection health checks using the backend's ping() method to verify connectivity."
+        },
+        {
+          "path": "frontend/src/components/ErrorDisplay.tsx",
+          "operation": "create",
+          "description": "Create a reusable error display component that formats backend errors into user-friendly messages with icons and suggested actions. Support different error severities (warning, error, critical). Include collapsible technical details section for debugging. Provide retry and dismiss actions."
+        },
+        {
+          "path": "frontend/src/pages/LoginChoice.tsx",
+          "operation": "modify",
+          "description": "Add error handling UI that displays backend connection errors using the ErrorDisplay component. Show connection status and error messages prominently before login options. Prevent login attempts when backend is unreachable and provide clear feedback to users."
+        },
+        {
+          "path": "frontend/src/pages/UserChecklist.tsx",
+          "operation": "modify",
+          "description": "Add error handling for backend operations including checklist submission failures. Use ErrorDisplay component to show error messages. Implement loading states and disable submission button when backend is unavailable. Preserve form data when errors occur so users don't lose their work."
         },
         {
           "path": "frontend/src/pages/AdminDashboard.tsx",
           "operation": "modify",
-          "description": "Update the dashboard error UI to distinguish 'not signed in', 'not an admin', and 'cannot reach backend' states; wire buttons so Retry triggers the appropriate action (actor init vs refetch) and unauthorized states offer return-to-login / re-auth actions rather than looping retries."
+          "description": "Add error handling for admin query failures using ErrorDisplay component. Show clear error messages when entries cannot be loaded. Implement retry logic for failed queries. Handle authorization errors separately from connection errors."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Eliminate all runtime errors, console warnings, and exceptions throughout the frontend application",
+      "acceptanceCriteria": [
+        "No unhandled exceptions in frontend code",
+        "No console errors or warnings during normal application flow",
+        "All error states are handled gracefully with user-friendly messages",
+        "Backend queries and mutations complete successfully without errors"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add comprehensive error handling to all query hooks. Ensure queries properly handle null/undefined actor states. Add retry logic with appropriate retry conditions. Log query errors for debugging. Prevent query execution when actor is not ready or authentication is incomplete."
+        },
+        {
+          "path": "frontend/src/components/CameraCaptureModal.tsx",
+          "operation": "modify",
+          "description": "Add error boundary around camera functionality to catch and handle camera initialization errors. Improve error state handling for camera permission denials, device not found, and browser incompatibility. Ensure proper cleanup of camera streams when component unmounts or modal closes to prevent resource leaks."
+        },
+        {
+          "path": "frontend/src/components/ChecklistItemCard.tsx",
+          "operation": "modify",
+          "description": "Add null checks for photo state and ExternalBlob handling. Ensure proper error handling when photo capture fails or blob operations encounter errors. Add loading states for async operations. Validate photo data before updating state."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Add top-level error boundary to catch unhandled errors. Implement proper cleanup in useEffect hooks. Ensure query invalidation on logout completes before navigation. Add error logging for development debugging. Handle routing errors gracefully."
+        },
+        {
+          "path": "frontend/src/components/ProfileSetupModal.tsx",
+          "operation": "modify",
+          "description": "Add form validation error handling. Ensure mutation errors are displayed to users. Add loading states during profile save operations. Prevent modal closure if save operation is in progress. Handle backend errors gracefully with retry option."
+        },
+        {
+          "path": "frontend/src/pages/AdminSubmissionDetail.tsx",
+          "operation": "modify",
+          "description": "Add comprehensive error handling for entry fetching failures. Handle null/undefined entry data gracefully. Add loading states and error displays. Ensure ExternalBlob photo URLs are validated before rendering. Handle missing or invalid entry IDs."
+        },
+        {
+          "path": "frontend/src/components/AppHeader.tsx",
+          "operation": "modify",
+          "description": "Add error handling for logout operation. Ensure query cache clearing completes successfully. Handle navigation errors. Add confirmation state and error feedback for logout failures."
         }
       ]
     }

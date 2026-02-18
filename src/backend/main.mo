@@ -1,24 +1,29 @@
 import List "mo:core/List";
-import Time "mo:core/Time";
-import Map "mo:core/Map";
-import Order "mo:core/Order";
 import Text "mo:core/Text";
-import Storage "blob-storage/Storage";
-import Array "mo:core/Array";
+import Map "mo:core/Map";
+import Time "mo:core/Time";
 import Int "mo:core/Int";
-
-import MixinStorage "blob-storage/Mixin";
-import Principal "mo:core/Principal";
+import Order "mo:core/Order";
+import Array "mo:core/Array";
 import Runtime "mo:core/Runtime";
+import Principal "mo:core/Principal";
+import MixinStorage "blob-storage/Mixin";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
+import Storage "blob-storage/Storage";
 
-import Migration "migration";
-
-(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
+  include MixinStorage();
+
+  stable var checklistEntryCounter : Nat = 0;
+  stable var adminBootstrapCompleted : Bool = false;
+
+  public type ChecklistItem = {
+    name : Text;
+    photo : ?Storage.ExternalBlob;
+  };
 
   module StoreChecklistEntry {
     public func compareByTimestamp(a : StoreChecklistEntry, b : StoreChecklistEntry) : Order.Order {
@@ -26,11 +31,8 @@ actor {
     };
   };
 
-  var checklistEntryCounter = 0;
-
-  public type ChecklistItem = {
+  public type UserProfile = {
     name : Text;
-    photo : ?Storage.ExternalBlob;
   };
 
   public type StoreChecklistEntry = {
@@ -41,17 +43,24 @@ actor {
     items : [ChecklistItem];
   };
 
-  public type UserProfile = {
-    name : Text;
+  public shared ({ caller }) func login(username : Text, password : Text) : async Bool {
+    // Only allow bootstrap login if no admin has been created yet
+    if (adminBootstrapCompleted) {
+      Runtime.trap("Unauthorized: Admin bootstrap already completed");
+    };
+    
+    if (username == "Admin" and password == "Admin") {
+      AccessControl.assignRole(accessControlState, caller, caller, #admin);
+      adminBootstrapCompleted := true;
+      return true;
+    };
+    false;
   };
 
-  let checklistEntries = Map.empty<Text, StoreChecklistEntry>();
-  let userProfiles = Map.empty<Principal, UserProfile>();
-
-  include MixinStorage();
-
-  // Profile management
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view profiles");
+    };
     userProfiles.get(caller);
   };
 
@@ -69,15 +78,12 @@ actor {
     userProfiles.add(caller, profile);
   };
 
-  // Checklist submission
   public shared ({ caller }) func createChecklistEntry(storeName : Text, items : [ChecklistItem]) : async Text {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can create checklist entries");
     };
-    
     checklistEntryCounter += 1;
     let entryId = checklistEntryCounter.toText();
-
     let entry : StoreChecklistEntry = {
       id = entryId;
       storeName;
@@ -85,7 +91,6 @@ actor {
       timestamp = Time.now();
       items;
     };
-
     checklistEntries.add(entryId, entry);
     entryId;
   };
@@ -146,4 +151,7 @@ actor {
       Runtime.trap("Unauthorized: Insufficient user privileges");
     };
   };
+
+  stable let userProfiles = Map.empty<Principal, UserProfile>();
+  stable let checklistEntries = Map.empty<Text, StoreChecklistEntry>();
 };

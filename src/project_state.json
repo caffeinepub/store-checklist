@@ -4,23 +4,31 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Admin can log in successfully, but an error is displayed after login (needs investigation/fix)."
+    "Unable to connect to backend - connection error needs fixing"
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-fix-the-admin-authentication-authorization-flow-so-that-an-admin-who-logs-in-can-successfully-load-admin-dashboard-data-without-receiving-an-authorization-permission-error",
-      "title": "Fix the admin authentication/authorization flow so that an admin who logs in can successfully load Admin Dashboard data without receiving an authorization/permission error.",
+      "id": "feature-debug-and-fix-the-unable-to-connect-to-backend-error-that-prevents-the-application-from-establishing-communication-with-the-backend-canister",
+      "title": "Debug and fix the 'Unable to connect to backend' error that prevents the application from establishing communication with the backend canister",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-update-the-frontend-admin-login-and-admin-page-gating-so-that-admin-access-is-tied-to-the-authenticated-internet-identity-principal-not-just-sessionstorage-credentials-and-present-clear-recovery-actions-when-authorization-fails",
-      "title": "Update the frontend admin login and admin page gating so that admin access is tied to the authenticated Internet Identity principal (not just sessionStorage credentials), and present clear recovery actions when authorization fails.",
+      "id": "feature-implement-comprehensive-error-handling-in-usebackendactor-to-provide-clear-error-messages-when-backend-connection-fails",
+      "title": "Implement comprehensive error handling in useBackendActor to provide clear error messages when backend connection fails",
       "reqIds": [
-        "REQ-3"
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-eliminate-all-runtime-errors-console-warnings-and-exceptions-throughout-the-application",
+      "title": "Eliminate all runtime errors, console warnings, and exceptions throughout the application",
+      "reqIds": [
+        "REQ-5"
       ],
       "version": 1
     }
@@ -28,14 +36,22 @@
   "new_feature_requests": [
     {
       "id": "AR-2",
-      "summary": "Add backend support to reliably establish at least one admin principal (bootstrap) and to check admin authorization in a way the frontend can use, without relying on frontend-only hardcoded credentials.",
+      "summary": "Verify that the canister ID configuration is correct in the frontend and matches the deployed backend canister",
       "reqIds": [
         "REQ-2"
       ],
       "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Ensure the backend canister is properly deployed and responding to queries",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "status": "pending"
     }
   ],
-  "projectName": "Protect",
+  "projectName": "Fix backend connection error and eliminate all errors",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

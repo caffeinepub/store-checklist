@@ -140,6 +140,7 @@ export interface backendInterface {
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     hasAdminRole(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
+    login(username: string, password: string): Promise<boolean>;
     ping(): Promise<string>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
 }
@@ -423,6 +424,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.isCallerAdmin();
+            return result;
+        }
+    }
+    async login(arg0: string, arg1: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.login(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.login(arg0, arg1);
             return result;
         }
     }

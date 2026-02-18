@@ -1,13 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the admin authentication/authorization flow so an admin can log in with Internet Identity and successfully access the Admin Dashboard without permission errors, while keeping admin data protected fromanalysis.
+**Goal:** Fix the backend connection error and eliminate all runtime errors in the application.
 
-**Planned changes.text:**
-- Align backend admin authorization checks with a reliable admin bootstrap/assignment mechanism so at least one admin principal canfinal be established and verified.
-- Ensure backend exposes a clear “is current caller an admin” query that matches the authorization enforced by admin-only methods.
-- Update frontend admin login so admin access is tied to the authenticated Internet Identity principal (not sessionStorage-only credentials).
-- Gate /admin routes and admin data queries until an authenticated session is active and admin authorization has been confirmed.
-- Improve Admin Dashboard error handling to distinguish permission vs connectivity issues, provide clear recovery actions, and ensure Retry retries the correct step without looping.
+**Planned changes:**
+- Debug and resolve the "Unable to connect to backend" error preventing frontend-backend communication
+- Verify canister ID configuration matches the deployed backend canister
+- Ensure backend canister is properly deployed and responding to queries
+- Implement comprehensive error handling in useBackendActor with clear error messages
+- Eliminate all runtime errors, console warnings, and exceptions throughout the application
 
-**User-visible outcome:** After signing in with Internet Identity as an authorized admin, the Admin Dashboard loads submissions successfully; non-admin users see a clear message indicating lack of permission and can return to login/re-authenticate without exposing admin-only data.
+**User-visible outcome:** Users can successfully interact with the application without encountering connection errors or runtime exceptions, with the frontend reliably communicating with the backend canister.

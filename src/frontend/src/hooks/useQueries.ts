@@ -2,31 +2,34 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBackendActor } from './useBackendActor';
 import type { StoreChecklistEntry, ChecklistItem, UserProfile } from '../backend';
 import { ExternalBlob } from '../backend';
-import { normalizeBackendError, isRetryableError } from '../utils/backendErrors';
 import { useAdminAuthorization } from './useAdminAuthorization';
+import { useInternetIdentity } from './useInternetIdentity';
+import { normalizeBackendError } from '../utils/backendErrors';
 
 // User profile queries
 export function useGetCallerUserProfile() {
-  const { actor, actorReady, actorLoading, checkHealth } = useBackendActor();
+  const { actor, actorReady, actorLoading } = useBackendActor();
+  const { identity } = useInternetIdentity();
 
   const query = useQuery<UserProfile | null>({
     queryKey: ['currentUserProfile'],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) {
+        console.error('[useGetCallerUserProfile] Actor not available');
+        throw new Error('Backend connection not available');
+      }
       try {
-        return await actor.getCallerUserProfile();
+        console.log('[useGetCallerUserProfile] Fetching user profile...');
+        const profile = await actor.getCallerUserProfile();
+        console.log('[useGetCallerUserProfile] Profile fetched:', profile ? 'exists' : 'null');
+        return profile;
       } catch (error) {
-        // Check health to improve error classification
-        const pingSucceeded = await checkHealth();
-        const normalizedMessage = normalizeBackendError(error, pingSucceeded);
-        throw new Error(normalizedMessage);
+        console.error('[useGetCallerUserProfile] Error:', error);
+        throw new Error(normalizeBackendError(error));
       }
     },
-    enabled: actorReady,
-    retry: (failureCount, error) => {
-      if (!isRetryableError(error)) return false;
-      return failureCount < 2;
-    },
+    enabled: actorReady && !!identity,
+    retry: false,
   });
 
   return {
@@ -37,20 +40,22 @@ export function useGetCallerUserProfile() {
 }
 
 export function useSaveCallerUserProfile() {
-  const { actor, actorReady, checkHealth } = useBackendActor();
+  const { actor, actorReady } = useBackendActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
       if (!actor || !actorReady) {
-        throw new Error('Connecting to backend service. Please wait...');
+        console.error('[useSaveCallerUserProfile] Backend not ready');
+        throw new Error('Backend connection not ready. Please wait and try again.');
       }
       try {
-        return await actor.saveCallerUserProfile(profile);
+        console.log('[useSaveCallerUserProfile] Saving profile...');
+        await actor.saveCallerUserProfile(profile);
+        console.log('[useSaveCallerUserProfile] Profile saved successfully');
       } catch (error) {
-        const pingSucceeded = await checkHealth();
-        const normalizedMessage = normalizeBackendError(error, pingSucceeded);
-        throw new Error(normalizedMessage);
+        console.error('[useSaveCallerUserProfile] Error:', error);
+        throw new Error(normalizeBackendError(error));
       }
     },
     onSuccess: () => {
@@ -61,26 +66,29 @@ export function useSaveCallerUserProfile() {
 
 // Checklist entry mutations
 export function useCreateChecklistEntry() {
-  const { actor, actorReady, checkHealth } = useBackendActor();
+  const { actor, actorReady } = useBackendActor();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async ({ storeName, items }: { storeName: string; items: Array<{ name: string; photo: Uint8Array }> }) => {
       if (!actor || !actorReady) {
-        throw new Error('Connecting to backend service. Please wait...');
+        console.error('[useCreateChecklistEntry] Backend not ready');
+        throw new Error('Backend connection not ready. Please wait and try again.');
       }
 
       try {
+        console.log('[useCreateChecklistEntry] Creating checklist entry...');
         const backendItems: ChecklistItem[] = items.map(item => ({
           name: item.name,
           photo: ExternalBlob.fromBytes(item.photo as Uint8Array<ArrayBuffer>),
         }));
 
-        return await actor.createChecklistEntry(storeName, backendItems);
+        const entryId = await actor.createChecklistEntry(storeName, backendItems);
+        console.log('[useCreateChecklistEntry] Entry created with ID:', entryId);
+        return entryId;
       } catch (error) {
-        const pingSucceeded = await checkHealth();
-        const normalizedMessage = normalizeBackendError(error, pingSucceeded);
-        throw new Error(normalizedMessage);
+        console.error('[useCreateChecklistEntry] Error:', error);
+        throw new Error(normalizeBackendError(error));
       }
     },
     onSuccess: () => {
@@ -89,93 +97,100 @@ export function useCreateChecklistEntry() {
   });
 }
 
-// Admin queries - now gated by actual backend admin authorization
+// Admin queries - strictly gated on authenticated identity, actorReady, and confirmed admin status
 export function useGetAllChecklistEntries() {
-  const { actor, actorReady, checkHealth } = useBackendActor();
+  const { actor, actorReady, actorVersion } = useBackendActor();
   const { isAdmin, isCheckingAdmin } = useAdminAuthorization();
+  const { identity } = useInternetIdentity();
 
   return useQuery<StoreChecklistEntry[]>({
-    queryKey: ['checklistEntries'],
+    queryKey: ['checklistEntries', actorVersion],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) {
+        console.error('[useGetAllChecklistEntries] Actor not available');
+        throw new Error('Backend connection not available');
+      }
+      if (!isAdmin) {
+        console.error('[useGetAllChecklistEntries] Not authorized as admin');
+        throw new Error('Admin access required');
+      }
       try {
-        return await actor.getAllChecklistEntries();
+        console.log('[useGetAllChecklistEntries] Fetching all entries...');
+        const entries = await actor.getAllChecklistEntries();
+        console.log('[useGetAllChecklistEntries] Fetched', entries.length, 'entries');
+        return entries;
       } catch (error) {
-        const pingSucceeded = await checkHealth();
-        const normalizedMessage = normalizeBackendError(error, pingSucceeded);
-        throw new Error(normalizedMessage);
+        console.error('[useGetAllChecklistEntries] Error:', error);
+        throw new Error(normalizeBackendError(error));
       }
     },
-    enabled: actorReady && !isCheckingAdmin && isAdmin,
-    retry: (failureCount, error) => {
-      if (!isRetryableError(error)) return false;
-      return failureCount < 2;
-    },
+    enabled: !!identity && actorReady && !isCheckingAdmin && isAdmin,
+    retry: false,
   });
 }
 
 export function useGetAllEntriesSortedByNewest() {
-  const { actor, actorReady, checkHealth } = useBackendActor();
+  const { actor, actorReady, actorVersion } = useBackendActor();
   const { isAdmin, isCheckingAdmin } = useAdminAuthorization();
+  const { identity } = useInternetIdentity();
 
   return useQuery<StoreChecklistEntry[]>({
-    queryKey: ['checklistEntries', 'sorted', 'newest'],
+    queryKey: ['checklistEntriesSortedByNewest', actorVersion],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) {
+        console.error('[useGetAllEntriesSortedByNewest] Actor not available');
+        throw new Error('Backend connection not available');
+      }
+      if (!isAdmin) {
+        console.error('[useGetAllEntriesSortedByNewest] Not authorized as admin');
+        throw new Error('Admin access required');
+      }
       try {
-        return await actor.getAllEntriesSortedByNewestEntries();
+        console.log('[useGetAllEntriesSortedByNewest] Fetching sorted entries...');
+        const entries = await actor.getAllEntriesSortedByNewestEntries();
+        console.log('[useGetAllEntriesSortedByNewest] Fetched', entries.length, 'entries');
+        return entries;
       } catch (error) {
-        const pingSucceeded = await checkHealth();
-        const normalizedMessage = normalizeBackendError(error, pingSucceeded);
-        throw new Error(normalizedMessage);
+        console.error('[useGetAllEntriesSortedByNewest] Error:', error);
+        throw new Error(normalizeBackendError(error));
       }
     },
-    enabled: actorReady && !isCheckingAdmin && isAdmin,
-    retry: (failureCount, error) => {
-      if (!isRetryableError(error)) return false;
-      return failureCount < 2;
-    },
+    enabled: !!identity && actorReady && !isCheckingAdmin && isAdmin,
+    retry: false,
   });
 }
 
-export function useGetEntry(entryId: string) {
-  const { actor, actorReady, checkHealth } = useBackendActor();
+export function useGetEntry() {
+  const { actor, actorReady } = useBackendActor();
   const { isAdmin, isCheckingAdmin } = useAdminAuthorization();
-
-  return useQuery<StoreChecklistEntry | null>({
-    queryKey: ['checklistEntry', entryId],
-    queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
-      try {
-        return await actor.getEntry(entryId);
-      } catch (error) {
-        const pingSucceeded = await checkHealth();
-        const normalizedMessage = normalizeBackendError(error, pingSucceeded);
-        throw new Error(normalizedMessage);
-      }
-    },
-    enabled: actorReady && !isCheckingAdmin && isAdmin && !!entryId,
-    retry: (failureCount, error) => {
-      if (!isRetryableError(error)) return false;
-      return failureCount < 2;
-    },
-  });
-}
-
-export function useFilterEntriesByStoreName() {
-  const { actor, actorReady, checkHealth } = useBackendActor();
+  const { identity } = useInternetIdentity();
 
   return useMutation({
-    mutationFn: async (storeName: string) => {
+    mutationFn: async (entryId: string) => {
       if (!actor || !actorReady) {
-        throw new Error('Connecting to backend service. Please wait...');
+        console.error('[useGetEntry] Backend not ready');
+        throw new Error('Backend connection not ready. Please wait and try again.');
+      }
+      if (!identity) {
+        console.error('[useGetEntry] Not authenticated');
+        throw new Error('Authentication required');
+      }
+      if (isCheckingAdmin) {
+        console.error('[useGetEntry] Admin check in progress');
+        throw new Error('Verifying admin access...');
+      }
+      if (!isAdmin) {
+        console.error('[useGetEntry] Not authorized as admin');
+        throw new Error('Admin access required');
       }
       try {
-        return await actor.filterEntriesByStoreName(storeName);
+        console.log('[useGetEntry] Fetching entry:', entryId);
+        const entry = await actor.getEntry(entryId);
+        console.log('[useGetEntry] Entry fetched:', entry ? 'found' : 'not found');
+        return entry;
       } catch (error) {
-        const pingSucceeded = await checkHealth();
-        const normalizedMessage = normalizeBackendError(error, pingSucceeded);
-        throw new Error(normalizedMessage);
+        console.error('[useGetEntry] Error:', error);
+        throw new Error(normalizeBackendError(error));
       }
     },
   });

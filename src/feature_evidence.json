@@ -2,15 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-admin-authentication-authorization-flow-so-that-an-admin-who-logs-in-can-successfully-load-admin-dashboard-data-without-receiving-an-authorization-permission-error",
-      "featureTitle": "Fix the admin authentication/authorization flow so that an admin who logs in can successfully load Admin Dashboard data without receiving an authorization/permission error.",
+      "featureId": "feature-debug-and-fix-the-unable-to-connect-to-backend-error-that-prevents-the-application-from-establishing-communication-with-the-backend-canister",
+      "featureTitle": "Debug and fix the 'Unable to connect to backend' error that prevents the application from establishing communication with the backend canister",
       "files": [
         "frontend/src/App.tsx",
-        "frontend/src/hooks/useAdminSession.ts",
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/AdminDashboard.tsx",
-        "frontend/src/pages/AdminSubmissionDetail.tsx",
-        "frontend/src/utils/adminSession.ts"
+        "frontend/src/hooks/useBackendActor.ts",
+        "frontend/src/utils/backendErrors.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -28,12 +25,13 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-frontend-admin-login-and-admin-page-gating-so-that-admin-access-is-tied-to-the-authenticated-internet-identity-principal-not-just-sessionstorage-credentials-and-present-clear-recovery-actions-when-authorization-fails",
-      "featureTitle": "Update the frontend admin login and admin page gating so that admin access is tied to the authenticated Internet Identity principal (not just sessionStorage credentials), and present clear recovery actions when authorization fails.",
+      "featureId": "feature-implement-comprehensive-error-handling-in-usebackendactor-to-provide-clear-error-messages-when-backend-connection-fails",
+      "featureTitle": "Implement comprehensive error handling in useBackendActor to provide clear error messages when backend connection fails",
       "files": [
-        "frontend/src/components/AppHeader.tsx",
+        "frontend/src/hooks/useBackendActor.ts",
         "frontend/src/pages/AdminDashboard.tsx",
-        "frontend/src/pages/LoginChoice.tsx"
+        "frontend/src/pages/LoginChoice.tsx",
+        "frontend/src/pages/UserChecklist.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -46,7 +44,31 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-eliminate-all-runtime-errors-console-warnings-and-exceptions-throughout-the-application",
+      "featureTitle": "Eliminate all runtime errors, console warnings, and exceptions throughout the application",
+      "files": [
+        "frontend/src/App.tsx",
+        "frontend/src/components/AppHeader.tsx",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/AdminSubmissionDetail.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
       ],
       "confidence": "high"
     }

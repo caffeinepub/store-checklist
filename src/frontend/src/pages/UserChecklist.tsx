@@ -28,12 +28,13 @@ export default function UserChecklist() {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const { actorReady, actorLoading, actorError, retry } = useBackendActor();
-  const { data: userProfile, isLoading: profileLoading, isFetched: profileFetched } = useGetCallerUserProfile();
+  const { data: userProfile, isLoading: profileLoading, isFetched: profileFetched, error: profileError } = useGetCallerUserProfile();
   const saveProfile = useSaveCallerUserProfile();
   const createEntry = useCreateChecklistEntry();
 
   useEffect(() => {
     if (!identity) {
+      console.log('[UserChecklist] No identity, redirecting to login');
       navigate({ to: '/' });
     }
   }, [identity, navigate]);
@@ -76,6 +77,7 @@ export default function UserChecklist() {
     }
 
     try {
+      console.log('[UserChecklist] Submitting checklist...');
       // Convert photos to backend format
       const items = await Promise.all(
         CHECKLIST_ITEMS.map(async (itemName) => {
@@ -95,6 +97,7 @@ export default function UserChecklist() {
         items
       });
 
+      console.log('[UserChecklist] Checklist submitted successfully');
       // Show success and reset form
       setShowSuccess(true);
       setStoreName('');
@@ -108,7 +111,7 @@ export default function UserChecklist() {
       // Hide success message after 5 seconds
       setTimeout(() => setShowSuccess(false), 5000);
     } catch (error: any) {
-      console.error('Submission error:', error);
+      console.error('[UserChecklist] Submission error:', error);
       // Display only the user-friendly message, technical details stay in console
       const userMessage = error.message || 'Failed to submit checklist. Please try again.';
       setValidationError(userMessage);
@@ -124,7 +127,7 @@ export default function UserChecklist() {
     };
   }, []);
 
-  const showProfileSetup = !!identity && !profileLoading && profileFetched && userProfile === null;
+  const showProfileSetup = !!identity && !profileLoading && profileFetched && userProfile === null && !profileError;
   const isSubmitDisabled = createEntry.isPending || !actorReady || actorLoading;
 
   if (!identity) {
@@ -136,7 +139,13 @@ export default function UserChecklist() {
       <ProfileSetupModal
         open={showProfileSetup}
         onSave={async (name) => {
-          await saveProfile.mutateAsync({ name });
+          try {
+            console.log('[UserChecklist] Saving profile...');
+            await saveProfile.mutateAsync({ name });
+            console.log('[UserChecklist] Profile saved');
+          } catch (error) {
+            console.error('[UserChecklist] Profile save error:', error);
+          }
         }}
         isSaving={saveProfile.isPending}
       />
@@ -173,6 +182,15 @@ export default function UserChecklist() {
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Retry
                   </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {profileError && (
+              <Alert variant="destructive" className="glass shadow-glass">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Failed to load user profile. Please refresh the page.
                 </AlertDescription>
               </Alert>
             )}

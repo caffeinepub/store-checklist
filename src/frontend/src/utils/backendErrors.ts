@@ -4,9 +4,10 @@
  */
 
 export interface ErrorClassification {
-  category: 'network' | 'backend-unavailable' | 'unauthorized' | 'unknown';
+  category: 'network' | 'backend-unavailable' | 'unauthorized' | 'configuration' | 'unknown';
   userMessage: string;
   isRetryable: boolean;
+  technicalDetails?: string;
 }
 
 /**
@@ -22,14 +23,33 @@ export function classifyError(error: unknown, pingSucceeded?: boolean): ErrorCla
   }
 
   const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorString = String(error);
 
   // Check for authorization errors first (most specific)
   if (errorMessage.includes('Unauthorized') || errorMessage.includes('Insufficient user privileges')) {
     const isAdminError = errorMessage.includes('admin') || errorMessage.includes('Insufficient user privileges');
     return {
       category: 'unauthorized',
-      userMessage: isAdminError ? 'You do not have permission to perform this action.' : 'Access denied. Please check your credentials.',
+      userMessage: isAdminError 
+        ? 'You do not have permission to perform this action.' 
+        : 'Access denied. Please check your credentials.',
       isRetryable: false,
+      technicalDetails: errorMessage,
+    };
+  }
+
+  // Check for configuration/canister ID errors
+  if (
+    errorMessage.includes('Canister not found') ||
+    errorMessage.includes('canister does not exist') ||
+    errorMessage.includes('Invalid canister id') ||
+    errorMessage.includes('Could not find canister id')
+  ) {
+    return {
+      category: 'configuration',
+      userMessage: 'Backend service configuration error. Please contact support.',
+      isRetryable: false,
+      technicalDetails: errorMessage,
     };
   }
 
@@ -39,6 +59,7 @@ export function classifyError(error: unknown, pingSucceeded?: boolean): ErrorCla
       category: 'unauthorized',
       userMessage: 'Request was rejected. Please check your permissions.',
       isRetryable: false,
+      technicalDetails: errorMessage,
     };
   }
 
@@ -49,12 +70,15 @@ export function classifyError(error: unknown, pingSucceeded?: boolean): ErrorCla
     errorMessage.includes('Failed to fetch') ||
     errorMessage.includes('NetworkError') ||
     errorMessage.includes('ERR_INTERNET_DISCONNECTED') ||
-    errorMessage.includes('ERR_NAME_NOT_RESOLVED')
+    errorMessage.includes('ERR_NAME_NOT_RESOLVED') ||
+    errorMessage.includes('ECONNREFUSED') ||
+    errorMessage.includes('net::ERR')
   ) {
     return {
       category: 'network',
       userMessage: 'Network connection error. Please check your internet connection.',
       isRetryable: true,
+      technicalDetails: errorMessage,
     };
   }
 
@@ -67,12 +91,15 @@ export function classifyError(error: unknown, pingSucceeded?: boolean): ErrorCla
     errorMessage.includes('Reject code:') ||
     errorMessage.includes('IC0508') ||
     errorMessage.includes('IC0503') ||
-    errorMessage.includes('IC0301')
+    errorMessage.includes('IC0301') ||
+    errorMessage.includes('IC0302') ||
+    errorMessage.includes('Canister rejected the message')
   ) {
     return {
       category: 'backend-unavailable',
       userMessage: 'The service is temporarily unavailable. Please try again in a moment.',
       isRetryable: true,
+      technicalDetails: errorMessage,
     };
   }
 
@@ -82,24 +109,36 @@ export function classifyError(error: unknown, pingSucceeded?: boolean): ErrorCla
       category: 'backend-unavailable',
       userMessage: 'Unable to reach the backend service. Please try again.',
       isRetryable: true,
+      technicalDetails: errorMessage,
     };
   }
 
   // Check for actor not available (should be rare with new wrapper)
-  if (errorMessage.includes('Actor not available')) {
+  if (errorMessage.includes('Actor not available') || errorMessage.includes('Backend connection not available')) {
     return {
       category: 'backend-unavailable',
       userMessage: 'Connecting to backend service. Please wait...',
       isRetryable: true,
+      technicalDetails: errorMessage,
+    };
+  }
+
+  // Check for timeout errors
+  if (errorMessage.includes('timeout') || errorMessage.includes('timed out')) {
+    return {
+      category: 'network',
+      userMessage: 'Request timed out. Please try again.',
+      isRetryable: true,
+      technicalDetails: errorMessage,
     };
   }
 
   // For other errors, return a safe, generic message
-  // Never expose technical details to the user
   return {
     category: 'unknown',
     userMessage: 'An error occurred. Please try again.',
     isRetryable: true,
+    technicalDetails: errorMessage,
   };
 }
 
@@ -110,9 +149,10 @@ export function normalizeBackendError(error: unknown, pingSucceeded?: boolean): 
   const classification = classifyError(error, pingSucceeded);
   
   // Log the classification for debugging (technical details stay in console)
-  console.error('Error classification:', {
+  console.error('[backendErrors] Error classification:', {
     category: classification.category,
-    message: classification.userMessage,
+    userMessage: classification.userMessage,
+    technicalDetails: classification.technicalDetails,
     originalError: error,
     pingSucceeded,
   });
@@ -142,4 +182,12 @@ export function isInvalidCredentialsError(error: unknown): boolean {
 export function isRetryableError(error: unknown): boolean {
   const classification = classifyError(error);
   return classification.isRetryable;
+}
+
+/**
+ * Checks if an error is a configuration error
+ */
+export function isConfigurationError(error: unknown): boolean {
+  const classification = classifyError(error);
+  return classification.category === 'configuration';
 }

@@ -1,7 +1,7 @@
 import { useActor } from './useActor';
 import { useInternetIdentity } from './useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { backendInterface } from '../backend';
 
 export interface UseBackendActorReturn {
@@ -9,137 +9,134 @@ export interface UseBackendActorReturn {
   actorReady: boolean;
   actorLoading: boolean;
   actorError: string | null;
-  actorErrorDetails: unknown;
+  actorVersion: number;
   retry: () => Promise<void>;
-  checkHealth: () => Promise<boolean>;
+  pingBackend: () => Promise<boolean>;
 }
 
 /**
  * Wrapper hook that provides backend actor with explicit readiness state,
- * improved error diagnostics, and health-check capabilities.
+ * version tracking for invalidation, retry capabilities, and health checks.
+ * Invalidates admin authorization when actor changes.
  */
 export function useBackendActor(): UseBackendActorReturn {
   const { actor, isFetching } = useActor();
   const { identity, isInitializing } = useInternetIdentity();
   const queryClient = useQueryClient();
   const [isRetrying, setIsRetrying] = useState(false);
-  const [healthCheckPassed, setHealthCheckPassed] = useState<boolean | null>(null);
-  const [healthCheckInProgress, setHealthCheckInProgress] = useState(false);
+  const [actorVersion, setActorVersion] = useState(0);
+  const [healthCheckFailed, setHealthCheckFailed] = useState(false);
+  const prevActorRef = useRef<backendInterface | null>(null);
 
-  // Actor is ready when:
-  // 1. Not currently fetching/initializing
-  // 2. Actor instance exists
-  // 3. Identity system is initialized (even if anonymous)
-  // 4. Health check has passed (or hasn't been attempted yet)
-  const actorReady = !isFetching && !isInitializing && !!actor && !isRetrying && healthCheckPassed !== false;
-  const actorLoading = isFetching || isInitializing || isRetrying || healthCheckInProgress;
-
-  // Get the underlying query state for better error diagnostics
-  const actorQueryState = queryClient.getQueryState([
-    'actor',
-    identity?.getPrincipal().toString(),
-  ]);
-
-  // Determine error state with richer diagnostics
-  let actorError: string | null = null;
-  let actorErrorDetails: unknown = null;
-
-  // Show error only if health check explicitly failed or actor failed to initialize
-  if (healthCheckPassed === false) {
-    actorError = 'Unable to connect to the backend service. Please check your connection and try again.';
-    actorErrorDetails = 'Health check failed';
-  } else if (!actorLoading && !actor) {
-    actorErrorDetails = actorQueryState?.error;
-    
-    if (actorErrorDetails) {
-      const errorMessage = actorErrorDetails instanceof Error 
-        ? actorErrorDetails.message 
-        : String(actorErrorDetails);
-      
-      // Classify the error - keep messages user-friendly
-      if (
-        errorMessage.includes('fetch') ||
-        errorMessage.includes('network') ||
-        errorMessage.includes('Failed to fetch') ||
-        errorMessage.includes('NetworkError')
-      ) {
-        actorError = 'Network connection error. Please check your internet connection.';
-      } else if (
-        errorMessage.includes('canister') ||
-        errorMessage.includes('replica') ||
-        errorMessage.includes('IC0')
-      ) {
-        actorError = 'Backend service is temporarily unavailable. Please try again.';
-      } else {
-        actorError = 'Unable to connect to backend service. Please try again.';
+  // Increment version whenever actor changes (for dependent query invalidation)
+  useEffect(() => {
+    if (actor !== prevActorRef.current) {
+      prevActorRef.current = actor;
+      if (actor) {
+        console.log('[useBackendActor] Actor changed, incrementing version and invalidating admin auth');
+        setActorVersion(prev => prev + 1);
+        setHealthCheckFailed(false); // Reset health check on new actor
+        
+        // Invalidate admin authorization when actor changes
+        queryClient.invalidateQueries({ queryKey: ['adminAuthorization'] });
       }
-    } else {
-      actorError = 'Unable to initialize backend connection. Please try again.';
+    }
+  }, [actor, queryClient]);
+
+  // Perform health check when actor becomes available
+  useEffect(() => {
+    let mounted = true;
+
+    const checkHealth = async () => {
+      if (!actor || healthCheckFailed) return;
+
+      try {
+        console.log('[useBackendActor] Performing health check...');
+        const result = await actor.ping();
+        if (mounted) {
+          if (result === 'pong') {
+            console.log('[useBackendActor] Health check passed');
+            setHealthCheckFailed(false);
+          } else {
+            console.warn('[useBackendActor] Health check returned unexpected result:', result);
+            setHealthCheckFailed(true);
+          }
+        }
+      } catch (error) {
+        console.error('[useBackendActor] Health check failed:', error);
+        if (mounted) {
+          setHealthCheckFailed(true);
+        }
+      }
+    };
+
+    if (actor && !isFetching && !isInitializing) {
+      checkHealth();
     }
 
-    // Log detailed error for debugging only
-    if (actorErrorDetails) {
-      console.error('Backend actor initialization failed:', actorErrorDetails);
-    }
+    return () => {
+      mounted = false;
+    };
+  }, [actor, isFetching, isInitializing, healthCheckFailed]);
+
+  // Actor is ready when not fetching/initializing, actor exists, and health check passed
+  const actorReady = !isFetching && !isInitializing && !!actor && !isRetrying && !healthCheckFailed;
+  const actorLoading = isFetching || isInitializing || isRetrying;
+
+  // Error state - show if actor failed to load or health check failed
+  let actorError: string | null = null;
+  if (!actorLoading && !actor) {
+    actorError = 'Unable to connect to backend service. Please check your connection and try again.';
+  } else if (!actorLoading && healthCheckFailed) {
+    actorError = 'Backend service is not responding. Please try again in a moment.';
   }
 
-  // Health check function - calls backend ping to verify connectivity
-  const checkHealth = useCallback(async (): Promise<boolean> => {
+  // Ping function for manual health checks
+  const pingBackend = useCallback(async (): Promise<boolean> => {
     if (!actor) {
-      console.warn('Cannot check health: actor not available');
+      console.error('[useBackendActor] Cannot ping: actor not available');
       return false;
     }
 
-    setHealthCheckInProgress(true);
     try {
+      console.log('[useBackendActor] Manual ping...');
       const result = await actor.ping();
-      const isHealthy = result === 'pong';
-      setHealthCheckPassed(isHealthy);
-      
-      if (isHealthy) {
-        console.log('Backend health check: OK');
-      } else {
-        console.warn('Backend health check: unexpected response', result);
-      }
-      
-      return isHealthy;
+      const success = result === 'pong';
+      console.log('[useBackendActor] Ping result:', success ? 'success' : 'failed');
+      setHealthCheckFailed(!success);
+      return success;
     } catch (error) {
-      console.error('Backend health check failed:', error);
-      setHealthCheckPassed(false);
+      console.error('[useBackendActor] Ping failed:', error);
+      setHealthCheckFailed(true);
       return false;
-    } finally {
-      setHealthCheckInProgress(false);
     }
   }, [actor]);
 
-  // Run health check when actor becomes available
-  useEffect(() => {
-    if (actor && healthCheckPassed === null && !healthCheckInProgress) {
-      checkHealth();
-    }
-  }, [actor, healthCheckPassed, healthCheckInProgress, checkHealth]);
-
-  // Retry function - invalidates and refetches the actor query without page reload
+  // Retry function - invalidates and refetches the actor query
   const retry = useCallback(async () => {
-    console.log('Retrying backend connection...');
+    console.log('[useBackendActor] Retrying backend connection...');
     setIsRetrying(true);
-    setHealthCheckPassed(null);
-    setHealthCheckInProgress(false);
+    setHealthCheckFailed(false);
 
     try {
-      // Clear the actor query cache
+      // Invalidate actor query
       await queryClient.invalidateQueries({
         queryKey: ['actor'],
       });
 
-      // Refetch the actor
+      // Refetch actor
       await queryClient.refetchQueries({
         queryKey: ['actor', identity?.getPrincipal().toString()],
       });
 
-      console.log('Backend connection retry completed');
+      // Also invalidate admin authorization after retry
+      await queryClient.invalidateQueries({
+        queryKey: ['adminAuthorization'],
+      });
+
+      console.log('[useBackendActor] Backend connection retry completed');
     } catch (error) {
-      console.error('Retry failed:', error);
+      console.error('[useBackendActor] Retry failed:', error);
     } finally {
       setIsRetrying(false);
     }
@@ -150,8 +147,8 @@ export function useBackendActor(): UseBackendActorReturn {
     actorReady,
     actorLoading,
     actorError,
-    actorErrorDetails,
+    actorVersion,
     retry,
-    checkHealth,
+    pingBackend,
   };
 }

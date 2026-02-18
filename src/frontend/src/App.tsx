@@ -1,26 +1,42 @@
-import { createRouter, createRoute, createRootRoute, RouterProvider, Outlet, useNavigate } from '@tanstack/react-router';
-import { useInternetIdentity } from './hooks/useInternetIdentity';
-import { useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { StrictMode } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { RouterProvider, createRouter, createRootRoute, createRoute, Outlet, ErrorComponent } from '@tanstack/react-router';
+import { ThemeProvider } from 'next-themes';
+import { Toaster } from '@/components/ui/sonner';
+import AppLayout from './components/AppLayout';
 import LoginChoice from './pages/LoginChoice';
 import UserChecklist from './pages/UserChecklist';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminSubmissionDetail from './pages/AdminSubmissionDetail';
-import AppLayout from './components/AppLayout';
+import { useInternetIdentity } from './hooks/useInternetIdentity';
 
-// Root layout component
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 30000, // 30 seconds
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
+
 function RootLayout() {
   const { identity } = useInternetIdentity();
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
-  // Clear cache when identity changes (logout)
-  useEffect(() => {
-    if (!identity) {
+  // Clear query cache when identity changes (logout)
+  const currentPrincipal = identity?.getPrincipal().toString();
+  
+  if (!currentPrincipal) {
+    // Only clear if we had a principal before
+    const hadPrincipal = queryClient.getQueryData(['actor']);
+    if (hadPrincipal) {
+      console.log('[App] Identity cleared, clearing query cache');
       queryClient.clear();
-      navigate({ to: '/' });
     }
-  }, [identity, queryClient, navigate]);
+  }
 
   return (
     <AppLayout>
@@ -29,48 +45,58 @@ function RootLayout() {
   );
 }
 
-// Root route with layout
 const rootRoute = createRootRoute({
-  component: RootLayout
+  component: RootLayout,
+  errorComponent: ({ error }) => {
+    console.error('[App] Route error:', error);
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <ErrorComponent error={error} />
+        </div>
+      </div>
+    );
+  },
 });
 
-// Login choice route
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: LoginChoice
+  component: LoginChoice,
 });
 
-// User checklist route
-const userChecklistRoute = createRoute({
+const checklistRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/checklist',
-  component: UserChecklist
+  component: UserChecklist,
 });
 
-// Admin dashboard route
-const adminDashboardRoute = createRoute({
+const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin',
-  component: AdminDashboard
+  component: AdminDashboard,
 });
 
-// Admin submission detail route
-const adminSubmissionDetailRoute = createRoute({
+const adminSubmissionRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/admin/submission/$entryId',
-  component: AdminSubmissionDetail
+  component: AdminSubmissionDetail,
 });
 
-// Create router
 const routeTree = rootRoute.addChildren([
   indexRoute,
-  userChecklistRoute,
-  adminDashboardRoute,
-  adminSubmissionDetailRoute
+  checklistRoute,
+  adminRoute,
+  adminSubmissionRoute,
 ]);
 
-const router = createRouter({ routeTree });
+const router = createRouter({ 
+  routeTree,
+  defaultErrorComponent: ({ error }) => {
+    console.error('[Router] Error:', error);
+    return <ErrorComponent error={error} />;
+  },
+});
 
 declare module '@tanstack/react-router' {
   interface Register {
@@ -79,5 +105,14 @@ declare module '@tanstack/react-router' {
 }
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <StrictMode>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+          <Toaster />
+        </QueryClientProvider>
+      </ThemeProvider>
+    </StrictMode>
+  );
 }

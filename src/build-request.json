@@ -1,75 +1,113 @@
 {
   "kind": "build_request",
-  "title": "Fix admin dashboard permission error after admin login",
-  "projectName": "Protect",
+  "title": "Fix backend connection error and eliminate all errors",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the admin authentication/authorization flow so that an admin who logs in can successfully load Admin Dashboard data without receiving an authorization/permission error.",
+      "text": "Debug and fix the 'Unable to connect to backend' error that prevents the application from establishing communication with the backend canister",
       "target": "both",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-user-1"
         ],
         "quotes": [
-          "Successfully i logged in Admin but there it is showing this error fix it please",
-          "Yes please fix this issue do whatever it takes just make it work again"
+          "Unable to connect to backend fix this"
         ]
       },
       "acceptanceCriteria": [
-        "After completing the admin login flow, the Admin Dashboard successfully loads submissions when the logged-in principal has admin access (no 'You do not have permission to perform this action.' error).",
-        "If the current caller is not an admin, admin-only backend calls (e.g., getAllEntriesSortedByNewestEntries, getEntry) remain protected and do not expose data.",
-        "Admin-only pages do not attempt admin queries unless the app has validated that an admin session is active AND the caller is authorized as admin."
+        "The frontend successfully connects to the backend canister without connection errors",
+        "The useBackendActor hook returns a valid actor instance",
+        "Backend canister responds to health check or basic queries",
+        "No 'Unable to connect to backend' errors appear in the browser console or UI"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Add backend support to reliably establish at least one admin principal (bootstrap) and to check admin authorization in a way the frontend can use, without relying on frontend-only hardcoded credentials.",
-      "target": "backend",
+      "text": "Verify that the canister ID configuration is correct in the frontend and matches the deployed backend canister",
+      "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-user-1"
         ],
         "quotes": [
-          "Admin can log in successfully, but an error is displayed after login (needs investigation/fix)."
+          "Unable to connect to backend"
         ]
       },
       "acceptanceCriteria": [
-        "Backend provides a deterministic way for the app to ensure there is an admin principal for admin-only endpoints (e.g., a one-time bootstrap path for the first admin, or an explicit admin assignment flow guarded appropriately).",
-        "Backend exposes a query that the frontend can call to confirm whether the current caller is an admin (existing hasAdminRole may be used), and this result aligns with authorization enforced by admin-only methods.",
-        "Admin-only backend methods continue to trap/reject when called by non-admin principals."
+        "Frontend references the correct canister ID for the backend",
+        "Canister ID environment variables or configuration files are properly set",
+        "Actor initialization uses the correct canister ID"
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Update the frontend admin login and admin page gating so that admin access is tied to the authenticated Internet Identity principal (not just sessionStorage credentials), and present clear recovery actions when authorization fails.",
-      "target": "frontend",
+      "text": "Ensure the backend canister is properly deployed and responding to queries",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-user-1"
         ],
         "quotes": [
-          "Successfully i logged in Admin but there it is showing this error fix it please"
+          "Unable to connect to backend"
         ]
       },
       "acceptanceCriteria": [
-        "Admin login flow ensures the user is authenticated with Internet Identity before navigating to /admin routes and attempting admin queries.",
-        "If the caller is not authorized as admin, the UI shows a clear message explaining that the signed-in identity lacks admin permission and provides a way to return to the login screen (and/or re-authenticate).",
-        "Retry on Admin Dashboard retries the correct failing step (backend actor init vs query refetch) and does not loop endlessly on authorization failures.",
-        "The displayed error on Admin Dashboard is actionable and not misleading (distinguish permission errors from connectivity errors)."
+        "Backend canister is deployed and running",
+        "Backend canister accepts and responds to query calls",
+        "No runtime errors in the backend canister"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Implement comprehensive error handling in useBackendActor to provide clear error messages when backend connection fails",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-user-1"
+        ],
+        "quotes": [
+          "Unable to connect to backend"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Error messages clearly indicate the type of connection failure",
+        "Users see actionable error messages with suggested fixes",
+        "Error logging captures connection failure details for debugging"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Eliminate all runtime errors, console warnings, and exceptions throughout the application",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-user-1"
+        ],
+        "quotes": [
+          "make sure there is no errors after this update"
+        ]
+      },
+      "acceptanceCriteria": [
+        "No unhandled exceptions in frontend code",
+        "No console errors or warnings during normal application flow",
+        "All error states are handled gracefully with user-friendly messages",
+        "Backend queries and mutations complete successfully without errors"
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not edit any files under frontend/src/components/ui or other frontend immutable paths listed in SYSTEM_CONTEXT.",
-    "Use English for all user-facing text."
+    "Maintain existing authentication flow with Internet Identity",
+    "Preserve all existing features and functionality",
+    "Do not modify frontend/src/hooks/useInternetIdentity.ts",
+    "Do not modify frontend/src/hooks/useActor.ts",
+    "Do not modify frontend/src/main.tsx",
+    "Keep single-actor backend architecture in backend/main.mo"
   ],
   "nonGoals": [
-    "Adding third-party authentication providers (only Internet Identity is supported).",
-    "Implementing real-time updates or websockets for admin submissions.",
-    "Changing the visual theme/styling beyond what is necessary to support the fixed admin flow and error states."
+    "Adding new features beyond fixing the connection issue",
+    "Redesigning the UI or user flows",
+    "Changing the authentication mechanism"
   ],
   "imageRequirements": {
     "required": [],
