@@ -1,84 +1,21 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix admin session-based credential auth for admin pages",
+  "title": "Remove Caffeine.ai footer branding",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Update admin data fetching to call credential-based backend admin methods using stored admin session credentials, with correct missing/invalid credential handling.",
+      "id": "REQ-1",
+      "summary": "Remove all “Built with … caffeine.ai” branding text/link from the app layout footer while keeping footer spacing visually consistent.",
       "acceptanceCriteria": [
-        "After submitting the admin login form with User ID \"Admin\" and Password \"Admin\", navigation to /admin loads submissions without redirecting back to / with an \"Admin access required\" message.",
-        "/admin/submission/$entryId loads submission details successfully when accessed from the dashboard while an admin session exists.",
-        "If admin credentials are missing, the app continues to redirect to / with an English redirect message indicating admin login is required.",
-        "If admin credentials are invalid, admin pages show an English error state and clear the stored admin session."
+        "The footer in `frontend/src/components/AppLayout.tsx` no longer renders the text 'Built with' or the 'caffeine.ai' link.",
+        "No hyperlink to `https://caffeine.ai/` is present in the rendered UI footer.",
+        "App layout spacing remains visually consistent after removing the footer branding (no awkward empty footer area)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/backend.d.ts",
+          "path": "frontend/src/components/AppLayout.tsx",
           "operation": "modify",
-          "description": "Extend the typed backend interface to include the new credential-based admin query methods that accept (userId, password) for listing sorted submissions and loading a single submission, so frontend code can call them in a type-safe way."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Refactor admin React Query hooks to accept AdminCredentials and call the backend’s credential-based admin query methods (userId, password) instead of principal-protected methods; include credentials in query keys and only enable queries when both actorReady and credentials are present."
-        },
-        {
-          "path": "frontend/src/pages/AdminDashboard.tsx",
-          "operation": "modify",
-          "description": "Update the dashboard to use the credential-based admin query hook; when credentials are missing, keep current redirect-to-/ behavior with English message; when credentials are present but rejected, clear the stored admin session and render an English invalid-credentials error state (with a clear call-to-action to return to login) instead of misreporting backend connectivity issues."
-        },
-        {
-          "path": "frontend/src/pages/AdminSubmissionDetail.tsx",
-          "operation": "modify",
-          "description": "Update the submission detail page to fetch via credential-based admin query hook; keep redirect for missing credentials; on invalid credentials, clear the admin session and show an English error state on-page rather than redirecting as if it were only a missing-session scenario."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Harden the admin login credential check against whitespace and other common input issues while keeping existing English validation messages.",
-      "acceptanceCriteria": [
-        "Entering \"Admin\"/\"Admin\" with extra leading/trailing spaces still logs in successfully.",
-        "Entering empty values still shows the existing English required-fields error.",
-        "Entering incorrect credentials still shows the existing English invalid-credentials error and does not create an admin session."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/pages/LoginChoice.tsx",
-          "operation": "modify",
-          "description": "Trim adminUserId/adminPassword inputs for validation and storage (store normalized credentials), while preserving the existing English required-fields and invalid-credentials error messages and maintaining the current sessionStorage-based admin session behavior."
-        }
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "summary": "Ensure admin session + backend connectivity is stable across refresh and actor initialization; admin pages should wait for actor readiness without clearing sessions or misclassifying backend issues as credential issues.",
-      "acceptanceCriteria": [
-        "With a valid admin session stored in sessionStorage, refreshing /admin keeps the user on /admin and successfully reloads data once the backend actor is ready.",
-        "Transient backend actor initialization does not clear the admin session; admin pages wait for actor readiness and then fetch data using the stored credentials.",
-        "If the backend is unavailable, admin pages show the existing retry UX and do not misreport the situation as an admin-credential problem."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useAdminSession.ts",
-          "operation": "modify",
-          "description": "Make admin session hydration more robust across refresh/navigation by re-reading sessionStorage on mount (and on visibility/page show events as needed) so credentials do not transiently appear missing; do not clear valid sessions during actor initialization."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Ensure admin queries remain disabled until actorReady is true and credentials are present, preventing premature unauthorized states during actor initialization; preserve existing backend-unavailable retry behavior for genuine connectivity failures."
-        },
-        {
-          "path": "frontend/src/pages/AdminDashboard.tsx",
-          "operation": "modify",
-          "description": "Adjust admin dashboard rendering logic so actor initialization/backoff states do not trigger missing-credential redirects; keep existing retry UX for backend unavailability and only show credential-required messaging when credentials are actually absent."
-        },
-        {
-          "path": "frontend/src/pages/AdminSubmissionDetail.tsx",
-          "operation": "modify",
-          "description": "Adjust submission detail rendering logic to wait for actor readiness before attempting fetches; preserve backend-unavailable retry UX and avoid clearing/overriding admin session during transient actor initialization."
+          "description": "Remove the Caffeine AI branding text and any caffeine.ai hyperlink from the footer; replace with a neutral footer (e.g., copyright-only) or adjust footer layout so spacing remains consistent and no empty/awkward area is introduced."
         }
       ]
     }

@@ -33,8 +33,8 @@ export function normalizeBackendError(error: unknown): string {
   // Check for authorization errors (keep these specific)
   if (errorMessage.includes('Unauthorized')) {
     // Check if it's an admin-specific error
-    if (errorMessage.toLowerCase().includes('only admins') || errorMessage.toLowerCase().includes('admin')) {
-      return 'Admin access required. Please log in with admin credentials.';
+    if (errorMessage.includes('Only admins') || errorMessage.includes('admin')) {
+      return 'Invalid admin credentials';
     }
     return errorMessage; // Return as-is for other auth errors
   }
@@ -79,38 +79,22 @@ export function isBackendUnavailableError(error: unknown): boolean {
     errorMessage.includes('replica returned a rejection error') ||
     errorMessage.includes('IC0508') ||
     errorMessage.includes('IC0503') ||
-    errorMessage.includes('Network connection error') ||
-    errorMessage.includes('Unable to connect to backend')
-  );
-}
-
-/**
- * Checks if an error indicates unauthorized access (admin or user)
- */
-export function isUnauthorizedError(error: unknown): boolean {
-  if (!error) return false;
-  const errorMessage = error instanceof Error ? error.message : String(error);
-  
-  return (
-    errorMessage.includes('Unauthorized') ||
-    errorMessage.includes('Admin access required') ||
-    errorMessage.toLowerCase().includes('only admins') ||
-    errorMessage.toLowerCase().includes('only users')
+    errorMessage.includes('Network connection error')
   );
 }
 
 /**
  * Checks if an error indicates invalid admin credentials
- * Note: With the new authorization system, this checks for admin-specific unauthorized errors
  */
 export function isInvalidCredentialsError(error: unknown): boolean {
   if (!error) return false;
   const errorMessage = error instanceof Error ? error.message : String(error);
   
   return (
-    errorMessage.includes('Admin access required') ||
-    (errorMessage.includes('Unauthorized') && 
-      (errorMessage.toLowerCase().includes('only admins') || 
-       errorMessage.toLowerCase().includes('admin')))
+    errorMessage.includes('Invalid admin credentials') ||
+    errorMessage.includes('Unauthorized') && (
+      errorMessage.includes('Only admins') || 
+      errorMessage.includes('admin')
+    )
   );
 }

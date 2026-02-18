@@ -191,28 +191,36 @@ export default function UserChecklist() {
               </Alert>
             )}
 
+            {createEntry.isError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {createEntry.error?.message || 'Failed to submit checklist'}
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
-              <Label htmlFor="storeName">Store Name</Label>
+              <Label htmlFor="storeName">Store Name *</Label>
               <Input
                 id="storeName"
-                type="text"
-                placeholder="Enter store name"
                 value={storeName}
                 onChange={(e) => setStoreName(e.target.value)}
-                disabled={!actorReady}
+                placeholder="Enter store name"
+                disabled={isSubmitDisabled}
               />
             </div>
 
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Checklist Items</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {CHECKLIST_ITEMS.map((item) => (
+              <h3 className="font-semibold text-lg">Checklist Items</h3>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {CHECKLIST_ITEMS.map((itemName) => (
                   <ChecklistItemCard
-                    key={item}
-                    itemName={item}
-                    photo={photos[item]}
-                    onPhotoCapture={(file) => handlePhotoCapture(item, file)}
-                    disabled={!actorReady}
+                    key={itemName}
+                    itemName={itemName}
+                    photo={photos[itemName]}
+                    onPhotoCapture={(file) => handlePhotoCapture(itemName, file)}
+                    disabled={isSubmitDisabled}
                   />
                 ))}
               </div>
@@ -224,9 +232,14 @@ export default function UserChecklist() {
               className="w-full"
               size="lg"
             >
-              {createEntry.isPending ? (
+              {actorLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Connecting...
+                </>
+              ) : createEntry.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Submitting...
                 </>
               ) : (

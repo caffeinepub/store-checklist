@@ -1,94 +1,35 @@
 {
   "kind": "build_request",
-  "title": "Fix admin login so Admin/Admin grants backend access reliably",
+  "title": "Remove Caffeine.ai footer branding",
   "projectName": "Store Checklist Pro",
-  "priority": "high",
+  "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the backend to support admin access using the admin credentials stored in the frontend session so that an admin user who logs in with User ID \"Admin\" and Password \"Admin\" can successfully load admin data without triggering backend \"Unauthorized\" errors.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "In admin login i am entering Admin as user name and Admin as password it’s not accessible update it and make sure even after update it connects to the backend flawlessly"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Backend exposes admin-query entry points that accept (userId, password) and return the same data currently returned by the principal-protected admin query methods.",
-        "Credential validation accepts \"Admin\"/\"Admin\" (at minimum) and rejects incorrect credentials with a clear \"Unauthorized\"-style error message.",
-        "Admin queries made via the credential-based methods do not require Internet Identity admin privileges and succeed when valid credentials are provided.",
-        "Existing user flows (profile + checklist submission) remain unchanged and continue to require user permission checks."
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Update the frontend admin data-fetching flow to call the backend’s credential-based admin methods using the credentials from the existing admin session (sessionStorage), ensuring the Admin Dashboard and Admin Submission Detail load successfully after logging in with \"Admin\"/\"Admin\".",
+      "text": "Remove the “Built with … caffeine.ai” branding link from the bottom footer so no Caffeine AI / caffeine.ai text or link is shown anywhere in the app layout footer.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "make sure even after update it connects to the backend flawlessly"
+          "Remove the caffeine ai from bottom"
         ]
       },
       "acceptanceCriteria": [
-        "After submitting the admin login form with User ID \"Admin\" and Password \"Admin\", navigation to /admin loads submissions without redirecting back to / with an \"Admin access required\" message.",
-        "/admin/submission/$entryId loads submission details successfully when accessed from the dashboard while an admin session exists.",
-        "If admin credentials are missing, the app continues to redirect to / with an English redirect message indicating admin login is required.",
-        "If admin credentials are invalid, admin pages show an English error state and clear the stored admin session."
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Make the admin credential check in the LoginChoice admin login form robust to common input issues (e.g., leading/trailing whitespace), while keeping user-facing error text in English.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "In admin login i am entering Admin as user name and Admin as password it’s not accessible"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Entering \"Admin\"/\"Admin\" with extra leading/trailing spaces still logs in successfully.",
-        "Entering empty values still shows the existing English required-fields error.",
-        "Entering incorrect credentials still shows the existing English invalid-credentials error and does not create an admin session."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Ensure the admin login/session + backend connectivity remains stable across refresh and actor initialization, so admin pages do not erroneously show \"admin credentials required\" while valid credentials are present.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "make sure even after update it connects to the backend flawlessly"
-        ]
-      },
-      "acceptanceCriteria": [
-        "With a valid admin session stored in sessionStorage, refreshing /admin keeps the user on /admin and successfully reloads data once the backend actor is ready.",
-        "Transient backend actor initialization does not clear the admin session; admin pages wait for actor readiness and then fetch data using the stored credentials.",
-        "If the backend is unavailable, admin pages show the existing retry UX and do not misreport the situation as an admin-credential problem."
+        "The footer in `frontend/src/components/AppLayout.tsx` no longer renders the text 'Built with' or the 'caffeine.ai' link.",
+        "No hyperlink to `https://caffeine.ai/` is present in the rendered UI footer.",
+        "App layout spacing remains visually consistent after removing the footer branding (no awkward empty footer area)."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
-    "Do not edit any files under frontend/src/components/ui or other immutable paths listed in SYSTEM_CONTEXT.",
-    "Use English for all user-facing text.",
-    "Do not introduce third-party authentication providers; only Internet Identity and the existing admin credential form/session may be used."
+    "Do not modify files under `frontend/src/components/ui` (compose only).",
+    "Do not modify any paths listed in `frontend.immutablePaths` in SYSTEM_CONTEXT."
   ],
   "nonGoals": [
-    "Implementing role management UI for multiple admins.",
-    "Adding a database or any external storage service.",
-    "Changing the Internet Identity login flow for normal users."
+    "Changing the header branding/logo or app title.",
+    "Any backend changes or data model changes."
   ],
   "imageRequirements": {
     "required": [],

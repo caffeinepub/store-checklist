@@ -13,7 +13,7 @@ import { getAdminRedirectMessage, clearAdminRedirectMessage } from '../utils/adm
 type LoginIntent = 'user' | 'admin' | null;
 
 export default function LoginChoice() {
-  const { identity, login, isLoggingIn, loginError } = useInternetIdentity();
+  const { identity, login, isLoggingIn } = useInternetIdentity();
   const navigate = useNavigate();
   const [loginIntent, setLoginIntent] = useState<LoginIntent>(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -32,13 +32,6 @@ export default function LoginChoice() {
     }
   }, []);
 
-  // Show login errors from Internet Identity
-  useEffect(() => {
-    if (loginError && loginIntent === 'user') {
-      setAuthError(loginError.message || 'Login failed. Please try again.');
-    }
-  }, [loginError, loginIntent]);
-
   // Route user after successful login
   useEffect(() => {
     if (identity && loginIntent === 'user') {
@@ -53,7 +46,7 @@ export default function LoginChoice() {
       await login();
     } catch (error: any) {
       console.error('Login error:', error);
-      setAuthError(error.message || 'Login failed. Please try again.');
+      setAuthError('Login failed. Please try again.');
       setLoginIntent(null);
     }
   };
@@ -68,24 +61,20 @@ export default function LoginChoice() {
     e.preventDefault();
     setAuthError(null);
 
-    // Trim inputs to handle whitespace
-    const trimmedUserId = adminUserId.trim();
-    const trimmedPassword = adminPassword.trim();
-
     // Validate required fields
-    if (!trimmedUserId || !trimmedPassword) {
+    if (!adminUserId.trim() || !adminPassword.trim()) {
       setAuthError('Both User ID and Password are required.');
       return;
     }
 
-    // Validate exact credentials (case-sensitive)
-    if (trimmedUserId !== 'Admin' || trimmedPassword !== 'Admin') {
+    // Validate exact credentials
+    if (adminUserId !== 'Admin' || adminPassword !== 'Admin') {
       setAuthError('Invalid credentials. Please check your User ID and Password.');
       return;
     }
 
-    // Store normalized credentials in session
-    saveAdminSession({ userId: trimmedUserId, password: trimmedPassword });
+    // Store credentials in session
+    saveAdminSession({ userId: adminUserId, password: adminPassword });
 
     // Navigate to admin dashboard
     navigate({ to: '/admin' });

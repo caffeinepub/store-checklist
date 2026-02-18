@@ -1,81 +1,34 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T10:09:14.050Z",
+  "generatedAt": "2026-02-18T10:14:35.077Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 3,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update the backend to support admin access using the admin credentials stored in the frontend session so that an admin user who logs in with User ID \"Admin\" and Password \"Admin\" can successfully load admin data without triggering backend \"Unauthorized\" errors.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Update the frontend admin data-fetching flow to call the backend’s credential-based admin methods using the credentials from the existing admin session (sessionStorage), ensuring the Admin Dashboard and Admin Submission Detail load successfully after logging in with \"Admin\"/\"Admin\".",
+        "summary": "Remove the “Built with … caffeine.ai” branding link from the bottom footer so no Caffeine AI / caffeine.ai text or link is shown anywhere in the app layout footer.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/backend.d.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/AdminDashboard.tsx",
-          "frontend/src/pages/AdminSubmissionDetail.tsx"
+          "frontend/src/components/AppLayout.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/backend.d.ts",
-          "frontend/src/pages/AdminDashboard.tsx",
-          "frontend/src/pages/AdminSubmissionDetail.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Make the admin credential check in the LoginChoice admin login form robust to common input issues (e.g., leading/trailing whitespace), while keeping user-facing error text in English.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/pages/LoginChoice.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/pages/LoginChoice.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Ensure the admin login/session + backend connectivity remains stable across refresh and actor initialization, so admin pages do not erroneously show \"admin credentials required\" while valid credentials are present.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useAdminSession.ts",
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/AdminDashboard.tsx",
-          "frontend/src/pages/AdminSubmissionDetail.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useAdminSession.ts",
-          "frontend/src/pages/AdminDashboard.tsx",
-          "frontend/src/pages/AdminSubmissionDetail.tsx"
+          "frontend/src/components/AppLayout.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useAdminSession.ts",
-    "frontend/src/pages/AdminDashboard.tsx",
-    "frontend/src/pages/AdminSubmissionDetail.tsx",
-    "frontend/src/pages/LoginChoice.tsx",
+    "frontend/src/components/AppLayout.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

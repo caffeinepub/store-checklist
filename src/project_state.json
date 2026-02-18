@@ -1,36 +1,16 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project now focused on fixing admin login authentication so Admin/Admin works and remains properly connected to the backend after the update.",
-  "architectural_notes": [
-    "Admin login authentication should validate credentials against the backend/auth source (not stale cache or mismatched storage) and preserve backend connectivity after updates."
-  ],
-  "known_issues": [
-    "Admin login shows 'admin credentials required' / denies access even when entering Admin as username and Admin as password."
-  ],
-  "isFixRequest": true,
+  "summary": "New project",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-update-the-frontend-admin-data-fetching-flow-to-call-the-backend-s-credential-based-admin-methods-using-the-credentials-from-the-existing-admin-session-sessionstorage-ensuring-the-admin-dashboard-and-admin-submission-detail-load-successfully-after-logging-in-with-admin-admin",
-      "title": "Update the frontend admin data-fetching flow to call the backend’s credential-based admin methods using the credentials from the existing admin session (sessionStorage), ensuring the Admin Dashboard and Admin Submission Detail load successfully after logging in with \"Admin\"/\"Admin\".",
+      "id": "feature-remove-the-built-with-caffeine-ai-branding-link-from-the-bottom-footer-so-no-caffeine-ai-caffeine-ai-text-or-link-is-shown-anywhere-in-the-app-layout-footer",
+      "title": "Remove the “Built with … caffeine.ai” branding link from the bottom footer so no Caffeine AI / caffeine.ai text or link is shown anywhere in the app layout footer.",
       "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-make-the-admin-credential-check-in-the-loginchoice-admin-login-form-robust-to-common-input-issues-e-g-leading-trailing-whitespace-while-keeping-user-facing-error-text-in-english",
-      "title": "Make the admin credential check in the LoginChoice admin login form robust to common input issues (e.g., leading/trailing whitespace), while keeping user-facing error text in English.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-ensure-the-admin-login-session-backend-connectivity-remains-stable-across-refresh-and-actor-initialization-so-admin-pages-do-not-erroneously-show-admin-credentials-required-while-valid-credentials-are-present",
-      "title": "Ensure the admin login/session + backend connectivity remains stable across refresh and actor initialization, so admin pages do not erroneously show \"admin credentials required\" while valid credentials are present.",
-      "reqIds": [
-        "REQ-4"
+        "REQ-1"
       ],
       "version": 1
     }
@@ -38,16 +18,8 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Fix admin login: Admin/Admin credentials not accepted; ensure authentication connects to backend flawlessly after update",
+      "summary": "Remove the “caffeine ai” text/branding from the bottom of the app (footer).",
       "reqIds": [],
-      "status": "pending"
-    },
-    {
-      "id": "AR-2",
-      "summary": "Update the backend to support admin access using the admin credentials stored in the frontend session so that an admin user who logs in with User ID \"Admin\" and Password \"Admin\" can successfully load admin data without triggering backend \"Unauthorized\" errors.",
-      "reqIds": [
-        "REQ-1"
-      ],
       "status": "pending"
     }
   ],

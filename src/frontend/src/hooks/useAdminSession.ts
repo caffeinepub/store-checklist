@@ -7,7 +7,7 @@ import {
 } from '../utils/adminSession';
 
 export function useAdminSession() {
-  const [credentials, setCredentials] = useState<AdminCredentials | null>(() => getAdminSession());
+  const [credentials, setCredentials] = useState<AdminCredentials | null>(getAdminSession);
 
   const isAdminSessionActive = (): boolean => {
     return credentials !== null;
@@ -27,34 +27,14 @@ export function useAdminSession() {
     setCredentials(null);
   };
 
-  // Re-hydrate session on mount and visibility changes
+  // Sync with sessionStorage changes
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const session = getAdminSession();
-        setCredentials(session);
-      }
-    };
-
-    const handlePageShow = () => {
-      const session = getAdminSession();
-      setCredentials(session);
-    };
-
-    // Sync with sessionStorage changes from other tabs
     const handleStorageChange = () => {
       setCredentials(getAdminSession());
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('pageshow', handlePageShow);
     window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('pageshow', handlePageShow);
-      window.removeEventListener('storage', handleStorageChange);
-    };
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   return {

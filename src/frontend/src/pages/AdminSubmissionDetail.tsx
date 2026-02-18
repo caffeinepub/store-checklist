@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAdminSession } from '../hooks/useAdminSession';
 import { setAdminRedirectMessage } from '../utils/adminSession';
-import { isBackendUnavailableError, isUnauthorizedError } from '../utils/backendErrors';
+import { isBackendUnavailableError, isInvalidCredentialsError } from '../utils/backendErrors';
 
 export default function AdminSubmissionDetail() {
   const navigate = useNavigate();
@@ -19,20 +19,21 @@ export default function AdminSubmissionDetail() {
   const { actorReady, actorLoading, actorError, retry: retryActor } = useBackendActor();
   const { data: entry, isLoading: entryLoading, error: entryError, refetch } = useGetEntry(entryId);
 
-  // Redirect if no admin session - but wait for actor to be ready first
   useEffect(() => {
-    if (!actorLoading && !credentials) {
+    if (!credentials) {
       setAdminRedirectMessage('Admin login is required to access submission details.');
       navigate({ to: '/' });
     }
-  }, [credentials, navigate, actorLoading]);
+  }, [credentials, navigate]);
 
-  // Handle unauthorized errors - clear session and redirect
+  // Handle backend errors - only redirect on invalid credentials
   useEffect(() => {
-    if (entryError && isUnauthorizedError(entryError)) {
-      clearSession();
-      setAdminRedirectMessage('Admin access required. Please log in with valid admin credentials.');
-      navigate({ to: '/' });
+    if (entryError) {
+      if (isInvalidCredentialsError(entryError)) {
+        clearSession();
+        setAdminRedirectMessage('Invalid admin credentials. Please log in again.');
+        navigate({ to: '/' });
+      }
     }
   }, [entryError, clearSession, navigate]);
 
@@ -52,8 +53,7 @@ export default function AdminSubmissionDetail() {
     }
   };
 
-  // Show loading while actor initializes or credentials are being checked
-  if (actorLoading || !credentials || (entryLoading && !entry)) {
+  if (!credentials || isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />

@@ -57,24 +57,32 @@ export interface _SERVICE {
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createChecklistEntry' : ActorMethod<[string, Array<ChecklistItem>], string>,
   'filterEntriesByStoreName' : ActorMethod<
-    [string],
+    [string, string, string],
     Array<StoreChecklistEntry>
   >,
-  'filterEntriesByUser' : ActorMethod<[Principal], Array<StoreChecklistEntry>>,
-  'getAllChecklistEntries' : ActorMethod<[], Array<StoreChecklistEntry>>,
+  'filterEntriesByUser' : ActorMethod<
+    [string, string, Principal],
+    Array<StoreChecklistEntry>
+  >,
+  'getAllChecklistEntries' : ActorMethod<
+    [string, string],
+    Array<StoreChecklistEntry>
+  >,
   'getAllEntriesSortedByNewestEntries' : ActorMethod<
-    [],
+    [string, string],
     Array<StoreChecklistEntry>
   >,
   'getAllEntriesSortedByStore' : ActorMethod<
-    [string],
+    [string, string, string],
     Array<StoreChecklistEntry>
   >,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getEntry' : ActorMethod<[string], [] | [StoreChecklistEntry]>,
+  'getEntry' : ActorMethod<
+    [string, string, string],
+    [] | [StoreChecklistEntry]
+  >,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
-  'isAdmin' : ActorMethod<[], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
 }
