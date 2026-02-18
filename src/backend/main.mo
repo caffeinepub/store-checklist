@@ -6,19 +6,18 @@ import Text "mo:core/Text";
 import Storage "blob-storage/Storage";
 import Array "mo:core/Array";
 import Int "mo:core/Int";
+import Migration "migration";
 import MixinStorage "blob-storage/Mixin";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 
+// Use the migration function to transform persistent state on upgrades
+(with migration = Migration.run)
 actor {
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
-
-  // Shared admin credentials
-  let adminUserId = "Admin";
-  let adminPassword = "Admin";
 
   module StoreChecklistEntry {
     public func compareByTimestamp(a : StoreChecklistEntry, b : StoreChecklistEntry) : Order.Order {
@@ -83,18 +82,18 @@ actor {
     entryId;
   };
 
-  public query ({ caller }) func getAllChecklistEntries(userId : Text, password : Text) : async [StoreChecklistEntry] {
-    adminCheck(userId, password);
+  public shared ({ caller }) func getAllChecklistEntries() : async [StoreChecklistEntry] {
+    authorizationGuard(#admin, caller);
     checklistEntries.values().toArray();
   };
 
-  public query ({ caller }) func getEntry(userId : Text, password : Text, entryId : Text) : async ?StoreChecklistEntry {
-    adminCheck(userId, password);
+  public shared ({ caller }) func getEntry(entryId : Text) : async ?StoreChecklistEntry {
+    authorizationGuard(#admin, caller);
     checklistEntries.get(entryId);
   };
 
-  public query ({ caller }) func filterEntriesByStoreName(userId : Text, password : Text, storeName : Text) : async [StoreChecklistEntry] {
-    adminCheck(userId, password);
+  public shared ({ caller }) func filterEntriesByStoreName(storeName : Text) : async [StoreChecklistEntry] {
+    authorizationGuard(#admin, caller);
     checklistEntries.values().toArray().filter(
       func(entry) {
         Text.equal(entry.storeName, storeName);
@@ -102,8 +101,8 @@ actor {
     );
   };
 
-  public query ({ caller }) func filterEntriesByUser(userId : Text, password : Text, user : Principal) : async [StoreChecklistEntry] {
-    adminCheck(userId, password);
+  public shared ({ caller }) func filterEntriesByUser(user : Principal) : async [StoreChecklistEntry] {
+    authorizationGuard(#admin, caller);
     checklistEntries.values().toArray().filter(
       func(entry) {
         entry.submitter == user;
@@ -111,13 +110,13 @@ actor {
     );
   };
 
-  public query ({ caller }) func getAllEntriesSortedByNewestEntries(userId : Text, password : Text) : async [StoreChecklistEntry] {
-    adminCheck(userId, password);
+  public shared ({ caller }) func getAllEntriesSortedByNewestEntries() : async [StoreChecklistEntry] {
+    authorizationGuard(#admin, caller);
     checklistEntries.values().toArray().sort(StoreChecklistEntry.compareByTimestamp);
   };
 
-  public query ({ caller }) func getAllEntriesSortedByStore(userId : Text, password : Text, storeName : Text) : async [StoreChecklistEntry] {
-    adminCheck(userId, password);
+  public shared ({ caller }) func getAllEntriesSortedByStore(storeName : Text) : async [StoreChecklistEntry] {
+    authorizationGuard(#admin, caller);
     let filtered = checklistEntries.values().toArray().filter(
       func(entry) {
         Text.equal(entry.storeName, storeName);
@@ -126,9 +125,18 @@ actor {
     filtered.sort(StoreChecklistEntry.compareByTimestamp);
   };
 
-  func adminCheck(userId : Text, password : Text) {
-    if (userId != adminUserId or password != adminPassword) {
-      Runtime.trap("Unauthorized: Only admins can perform this action");
+  public query func ping() : async Text {
+    "pong";
+  };
+
+  public query ({ caller }) func hasAdminRole() : async Bool {
+    AccessControl.isAdmin(accessControlState, caller);
+  };
+
+  func authorizationGuard(role : AccessControl.UserRole, caller : Principal) {
+    if (not (AccessControl.hasPermission(accessControlState, caller, role))) {
+      Runtime.trap("Unauthorized: Insufficient user privileges");
     };
   };
 };
+

@@ -1,21 +1,72 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Remove Caffeine.ai footer branding",
+  "title": "Restore frontend backend connectivity UX and remove caffeine.ai footer",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Remove all “Built with … caffeine.ai” branding text/link from the app layout footer while keeping footer spacing visually consistent.",
+      "summary": "Stabilize frontend actor readiness and health-check flow so backend connectivity is reliable with clear retry behavior.",
       "acceptanceCriteria": [
-        "The footer in `frontend/src/components/AppLayout.tsx` no longer renders the text 'Built with' or the 'caffeine.ai' link.",
-        "No hyperlink to `https://caffeine.ai/` is present in the rendered UI footer.",
-        "App layout spacing remains visually consistent after removing the footer branding (no awkward empty footer area)."
+        "From the Login page, the app reaches a stable connected state (no ongoing 'Connecting...' indicator) within a reasonable time on a normal network connection.",
+        "The frontend can successfully call the backend health endpoint (ping -> \"pong\") without throwing an error.",
+        "User flow works again: after Internet Identity login, the app navigates to /checklist and loads the caller profile query without connection failures.",
+        "If the backend is truly unreachable, the UI shows a clear error state and the Retry button attempts reconnection without requiring a full page reload."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useBackendActor.ts",
+          "operation": "modify",
+          "description": "Refine actor readiness to incorporate an explicit health-check state (ping/pong) and ensure actorError reflects true connectivity failures (including ping failures) rather than leaving the UI in a perpetual 'Connecting...' state; update retry to reliably invalidate/refetch the actor query for both anonymous and authenticated states without requiring a reload."
+        },
+        {
+          "path": "frontend/src/pages/LoginChoice.tsx",
+          "operation": "modify",
+          "description": "Adjust the Login page connection UI to rely on the improved useBackendActor readiness/health state so 'Connecting...' resolves when healthy, shows a clear error when unhealthy, and the Retry button triggers the hook retry and returns the UI to a connecting state while retrying."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Ensure profile and checklist React Query hooks consistently gate calls on the updated actor readiness/health state and use the shared error normalization so calls do not fail during transient actor initialization; keep retry behavior aligned with retryable vs non-retryable connectivity states."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Remove the caffeine.ai attribution from the footer across the app without leaving layout gaps.",
+      "acceptanceCriteria": [
+        "The footer no longer renders any link/text referencing \"caffeine.ai\" on all routes.",
+        "No empty/extra footer spacing remains after removal (page layout looks intentional at the bottom)."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/AppLayout.tsx",
           "operation": "modify",
-          "description": "Remove the Caffeine AI branding text and any caffeine.ai hyperlink from the footer; replace with a neutral footer (e.g., copyright-only) or adjust footer layout so spacing remains consistent and no empty/awkward area is introduced."
+          "description": "Remove the 'Built with caffeine.ai' attribution block (including the caffeine.ai link and related icon usage) and adjust footer content/layout so spacing remains intentional across all routes."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Make all user-facing backend connectivity errors friendly English and prevent raw technical details from appearing in UI.",
+      "acceptanceCriteria": [
+        "When backend connection fails, the UI displays a short English error message suitable for end users.",
+        "Technical details (if logged) stay in the browser console and are not rendered in visible UI components."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/utils/backendErrors.ts",
+          "operation": "modify",
+          "description": "Tighten error classification/normalization so returned userMessage values are consistently short, user-friendly English (including for authorization-like traps) and ensure technical/rejection metadata is stripped from messages shown in the UI, while keeping detailed diagnostics in console logs."
+        },
+        {
+          "path": "frontend/src/hooks/useBackendActor.ts",
+          "operation": "modify",
+          "description": "Route any connectivity/initialization errors through the shared backend error normalization and ensure UI-facing error strings never include raw error objects or stack traces (keep details only in console logging)."
+        },
+        {
+          "path": "frontend/src/pages/UserChecklist.tsx",
+          "operation": "modify",
+          "description": "Ensure any backend/connection failures surfaced on the checklist page display only the normalized, user-friendly English message (no raw error serialization) while keeping technical details confined to console logging."
         }
       ]
     }

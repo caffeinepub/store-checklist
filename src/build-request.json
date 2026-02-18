@@ -1,35 +1,67 @@
 {
   "kind": "build_request",
-  "title": "Remove Caffeine.ai footer branding",
-  "projectName": "Store Checklist Pro",
-  "priority": "normal",
+  "title": "Restore backend connectivity and remove caffeine.ai footer regression",
+  "projectName": "Protect",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Remove the “Built with … caffeine.ai” branding link from the bottom footer so no Caffeine AI / caffeine.ai text or link is shown anywhere in the app layout footer.",
-      "target": "frontend",
+      "text": "Fix the frontend-to-backend connection so the app can successfully create a backend actor and call the backend without showing a persistent connection error.",
+      "target": "both",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-3"
         ],
         "quotes": [
-          "Remove the caffeine ai from bottom"
+          "It’s not connecting to backend now"
         ]
       },
       "acceptanceCriteria": [
-        "The footer in `frontend/src/components/AppLayout.tsx` no longer renders the text 'Built with' or the 'caffeine.ai' link.",
-        "No hyperlink to `https://caffeine.ai/` is present in the rendered UI footer.",
-        "App layout spacing remains visually consistent after removing the footer branding (no awkward empty footer area)."
+        "From the Login page, the app reaches a stable connected state (no ongoing 'Connecting...' indicator) within a reasonable time on a normal network connection.",
+        "The frontend can successfully call the backend health endpoint (ping -> \"pong\") without throwing an error.",
+        "User flow works again: after Internet Identity login, the app navigates to /checklist and loads the caller profile query without connection failures.",
+        "If the backend is truly unreachable, the UI shows a clear error state and the Retry button attempts reconnection without requiring a full page reload."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Remove the 'Built with caffeine.ai' attribution element from the bottom of the UI so it no longer appears in the app footer.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ],
+        "quotes": [
+          "and caffeine ai came again in bottom"
+        ]
+      },
+      "acceptanceCriteria": [
+        "The footer no longer renders any link/text referencing \"caffeine.ai\" on all routes.",
+        "No empty/extra footer spacing remains after removal (page layout looks intentional at the bottom)."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Ensure any user-facing backend connectivity error messages are in English and remain user-friendly (no raw technical stack traces shown in the UI).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-3"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When backend connection fails, the UI displays a short English error message suitable for end users.",
+        "Technical details (if logged) stay in the browser console and are not rendered in visible UI components."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under `frontend/src/components/ui` (compose only).",
-    "Do not modify any paths listed in `frontend.immutablePaths` in SYSTEM_CONTEXT."
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not modify read-only frontend paths listed as immutable by the system (including frontend/src/hooks/useActor.ts and Internet Identity hooks)."
   ],
   "nonGoals": [
-    "Changing the header branding/logo or app title.",
-    "Any backend changes or data model changes."
+    "Adding new product features beyond restoring backend connectivity and removing the caffeine.ai footer attribution.",
+    "Changing authentication providers (Internet Identity remains the only supported auth)."
   ],
   "imageRequirements": {
     "required": [],

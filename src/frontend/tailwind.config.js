@@ -83,6 +83,13 @@ export default {
                     'sans-serif'
                 ]
             },
+            backdropBlur: {
+                xs: '2px',
+            },
+            boxShadow: {
+                'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+                'glass-lg': '0 12px 48px 0 rgba(31, 38, 135, 0.2)',
+            },
             keyframes: {
                 'accordion-down': {
                     from: { height: '0' },

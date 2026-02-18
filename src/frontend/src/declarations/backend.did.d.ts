@@ -57,33 +57,26 @@ export interface _SERVICE {
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createChecklistEntry' : ActorMethod<[string, Array<ChecklistItem>], string>,
   'filterEntriesByStoreName' : ActorMethod<
-    [string, string, string],
+    [string],
     Array<StoreChecklistEntry>
   >,
-  'filterEntriesByUser' : ActorMethod<
-    [string, string, Principal],
-    Array<StoreChecklistEntry>
-  >,
-  'getAllChecklistEntries' : ActorMethod<
-    [string, string],
-    Array<StoreChecklistEntry>
-  >,
+  'filterEntriesByUser' : ActorMethod<[Principal], Array<StoreChecklistEntry>>,
+  'getAllChecklistEntries' : ActorMethod<[], Array<StoreChecklistEntry>>,
   'getAllEntriesSortedByNewestEntries' : ActorMethod<
-    [string, string],
+    [],
     Array<StoreChecklistEntry>
   >,
   'getAllEntriesSortedByStore' : ActorMethod<
-    [string, string, string],
+    [string],
     Array<StoreChecklistEntry>
   >,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getEntry' : ActorMethod<
-    [string, string, string],
-    [] | [StoreChecklistEntry]
-  >,
+  'getEntry' : ActorMethod<[string], [] | [StoreChecklistEntry]>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'hasAdminRole' : ActorMethod<[], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
+  'ping' : ActorMethod<[], string>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;

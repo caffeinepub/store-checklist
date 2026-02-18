@@ -71,9 +71,9 @@ export default function CameraCaptureModal({ open, onClose, onCapture, title = '
 
   return (
     <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="max-w-3xl w-[calc(100vw-2rem)] max-h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-3xl w-[calc(100vw-2rem)] max-h-[90vh] flex flex-col p-0 gap-0 glass-strong shadow-glass-lg border-2">
         {/* Fixed Header */}
-        <DialogHeader className="px-6 pt-6 pb-4 shrink-0">
+        <DialogHeader className="px-6 pt-6 pb-4 shrink-0 glass-subtle rounded-t-lg">
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             Position the item in the frame and capture the photo
@@ -84,7 +84,7 @@ export default function CameraCaptureModal({ open, onClose, onCapture, title = '
         <div className="flex-1 min-h-0 overflow-y-auto px-6">
           <div className="space-y-4 pb-4">
             {isSupported === false && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="glass shadow-glass">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
                   Camera is not supported in your browser. Please use a modern browser.
@@ -93,13 +93,13 @@ export default function CameraCaptureModal({ open, onClose, onCapture, title = '
             )}
 
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="glass shadow-glass">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{getErrorMessage()}</AlertDescription>
               </Alert>
             )}
 
-            <div className="relative bg-black rounded-lg overflow-hidden w-full" style={{ aspectRatio: '16/9' }}>
+            <div className="relative bg-black rounded-lg overflow-hidden w-full ring-2 ring-border/50" style={{ aspectRatio: '16/9' }}>
               {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
                   <Loader2 className="h-8 w-8 animate-spin text-white" />
@@ -124,14 +124,15 @@ export default function CameraCaptureModal({ open, onClose, onCapture, title = '
         </div>
 
         {/* Pinned Footer with Safe Area */}
-        <div className="shrink-0 border-t bg-background px-6 py-4 safe-area-bottom">
+        <div className="shrink-0 glass-subtle px-6 py-4 safe-area-bottom rounded-b-lg">
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={handleClose}>
+            <Button variant="outline" onClick={handleClose} className="glass-subtle">
               Cancel
             </Button>
             <Button
               onClick={handleCapture}
               disabled={!isActive || isLoading}
+              className="shadow-glass"
             >
               <Camera className="h-4 w-4 mr-2" />
               Capture Photo

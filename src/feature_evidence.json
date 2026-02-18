@@ -2,8 +2,31 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-the-built-with-caffeine-ai-branding-link-from-the-bottom-footer-so-no-caffeine-ai-caffeine-ai-text-or-link-is-shown-anywhere-in-the-app-layout-footer",
-      "featureTitle": "Remove the “Built with … caffeine.ai” branding link from the bottom footer so no Caffeine AI / caffeine.ai text or link is shown anywhere in the app layout footer.",
+      "featureId": "feature-fix-the-frontend-to-backend-connection-so-the-app-can-successfully-create-a-backend-actor-and-call-the-backend-without-showing-a-persistent-connection-error",
+      "featureTitle": "Fix the frontend-to-backend connection so the app can successfully create a backend actor and call the backend without showing a persistent connection error.",
+      "files": [
+        "frontend/src/hooks/useBackendActor.ts",
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/LoginChoice.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-remove-the-built-with-caffeine-ai-attribution-element-from-the-bottom-of-the-ui-so-it-no-longer-appears-in-the-app-footer",
+      "featureTitle": "Remove the 'Built with caffeine.ai' attribution element from the bottom of the UI so it no longer appears in the app footer.",
       "files": [
         "frontend/src/components/AppLayout.tsx"
       ],
@@ -18,7 +41,30 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-1"
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-any-user-facing-backend-connectivity-error-messages-are-in-english-and-remain-user-friendly-no-raw-technical-stack-traces-shown-in-the-ui",
+      "featureTitle": "Ensure any user-facing backend connectivity error messages are in English and remain user-friendly (no raw technical stack traces shown in the UI).",
+      "files": [
+        "frontend/src/hooks/useBackendActor.ts",
+        "frontend/src/pages/UserChecklist.tsx",
+        "frontend/src/utils/backendErrors.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

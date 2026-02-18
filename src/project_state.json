@@ -3,27 +3,39 @@
   "projectStateVersion": 3,
   "summary": "New project",
   "architectural_notes": [],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "App is not connecting to the backend.",
+    "\"caffeine ai\" element reappeared at the bottom of the UI (regression)."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-remove-the-built-with-caffeine-ai-branding-link-from-the-bottom-footer-so-no-caffeine-ai-caffeine-ai-text-or-link-is-shown-anywhere-in-the-app-layout-footer",
-      "title": "Remove the “Built with … caffeine.ai” branding link from the bottom footer so no Caffeine AI / caffeine.ai text or link is shown anywhere in the app layout footer.",
+      "id": "feature-fix-the-frontend-to-backend-connection-so-the-app-can-successfully-create-a-backend-actor-and-call-the-backend-without-showing-a-persistent-connection-error",
+      "title": "Fix the frontend-to-backend connection so the app can successfully create a backend actor and call the backend without showing a persistent connection error.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
-    }
-  ],
-  "new_feature_requests": [
+    },
     {
-      "id": "AR-1",
-      "summary": "Remove the “caffeine ai” text/branding from the bottom of the app (footer).",
-      "reqIds": [],
-      "status": "pending"
+      "id": "feature-remove-the-built-with-caffeine-ai-attribution-element-from-the-bottom-of-the-ui-so-it-no-longer-appears-in-the-app-footer",
+      "title": "Remove the 'Built with caffeine.ai' attribution element from the bottom of the UI so it no longer appears in the app footer.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-any-user-facing-backend-connectivity-error-messages-are-in-english-and-remain-user-friendly-no-raw-technical-stack-traces-shown-in-the-ui",
+      "title": "Ensure any user-facing backend connectivity error messages are in English and remain user-friendly (no raw technical stack traces shown in the UI).",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
     }
   ],
-  "projectName": "Store Checklist Pro",
+  "new_feature_requests": [],
+  "projectName": "Protect",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

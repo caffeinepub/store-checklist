@@ -36,15 +36,17 @@ export enum UserRole {
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createChecklistEntry(storeName: string, items: Array<ChecklistItem>): Promise<string>;
-    filterEntriesByStoreName(userId: string, password: string, storeName: string): Promise<Array<StoreChecklistEntry>>;
-    filterEntriesByUser(userId: string, password: string, user: Principal): Promise<Array<StoreChecklistEntry>>;
-    getAllChecklistEntries(userId: string, password: string): Promise<Array<StoreChecklistEntry>>;
-    getAllEntriesSortedByNewestEntries(userId: string, password: string): Promise<Array<StoreChecklistEntry>>;
-    getAllEntriesSortedByStore(userId: string, password: string, storeName: string): Promise<Array<StoreChecklistEntry>>;
+    filterEntriesByStoreName(storeName: string): Promise<Array<StoreChecklistEntry>>;
+    filterEntriesByUser(user: Principal): Promise<Array<StoreChecklistEntry>>;
+    getAllChecklistEntries(): Promise<Array<StoreChecklistEntry>>;
+    getAllEntriesSortedByNewestEntries(): Promise<Array<StoreChecklistEntry>>;
+    getAllEntriesSortedByStore(storeName: string): Promise<Array<StoreChecklistEntry>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getEntry(userId: string, password: string, entryId: string): Promise<StoreChecklistEntry | null>;
+    getEntry(entryId: string): Promise<StoreChecklistEntry | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    hasAdminRole(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
+    ping(): Promise<string>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
 }

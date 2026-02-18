@@ -1,199 +1,238 @@
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useNavigate } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ShieldCheck, ClipboardCheck, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, Loader2, RefreshCw, User, Shield } from 'lucide-react';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useAdminSession } from '../hooks/useAdminSession';
-import { getAdminRedirectMessage, clearAdminRedirectMessage } from '../utils/adminSession';
-
-type LoginIntent = 'user' | 'admin' | null;
+import { useBackendActor } from '../hooks/useBackendActor';
 
 export default function LoginChoice() {
-  const { identity, login, isLoggingIn } = useInternetIdentity();
   const navigate = useNavigate();
-  const [loginIntent, setLoginIntent] = useState<LoginIntent>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const search = useSearch({ strict: false }) as { redirect?: string };
+  const { login, identity, loginStatus } = useInternetIdentity();
+  const { saveAdminSession } = useAdminSession();
+  const { actorReady, actorLoading, actorError, retry } = useBackendActor();
+
   const [showAdminForm, setShowAdminForm] = useState(false);
   const [adminUserId, setAdminUserId] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
-  const { saveAdminSession } = useAdminSession();
-  const [redirectMessage, setRedirectMessage] = useState<string | null>(null);
+  const [adminError, setAdminError] = useState<string | null>(null);
 
-  // Check for redirect message on mount
+  // Redirect authenticated users
   useEffect(() => {
-    const message = getAdminRedirectMessage();
-    if (message) {
-      setRedirectMessage(message);
-      clearAdminRedirectMessage();
-    }
-  }, []);
-
-  // Route user after successful login
-  useEffect(() => {
-    if (identity && loginIntent === 'user') {
+    if (identity && actorReady) {
       navigate({ to: '/checklist' });
     }
-  }, [identity, loginIntent, navigate]);
+  }, [identity, actorReady, navigate]);
 
   const handleUserLogin = async () => {
-    setAuthError(null);
-    setLoginIntent('user');
     try {
       await login();
     } catch (error: any) {
       console.error('Login error:', error);
-      setAuthError('Login failed. Please try again.');
-      setLoginIntent(null);
     }
   };
 
-  const handleAdminClick = () => {
-    setAuthError(null);
-    setShowAdminForm(true);
-    setLoginIntent('admin');
-  };
+  const handleAdminLogin = () => {
+    setAdminError(null);
 
-  const handleAdminFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError(null);
-
-    // Validate required fields
     if (!adminUserId.trim() || !adminPassword.trim()) {
-      setAuthError('Both User ID and Password are required.');
+      setAdminError('Please enter both User ID and Password');
       return;
     }
 
-    // Validate exact credentials
     if (adminUserId !== 'Admin' || adminPassword !== 'Admin') {
-      setAuthError('Invalid credentials. Please check your User ID and Password.');
+      setAdminError('Invalid admin credentials');
       return;
     }
 
-    // Store credentials in session
     saveAdminSession({ userId: adminUserId, password: adminPassword });
-
-    // Navigate to admin dashboard
     navigate({ to: '/admin' });
   };
 
-  const handleBackToChoice = () => {
-    setShowAdminForm(false);
-    setLoginIntent(null);
-    setAdminUserId('');
-    setAdminPassword('');
-    setAuthError(null);
-  };
-
-  const isLoading = isLoggingIn && loginIntent === 'user';
+  const isLoggingIn = loginStatus === 'logging-in';
+  const isConnecting = actorLoading || (identity && !actorReady);
 
   return (
-    <div className="min-h-[calc(100vh-200px)] flex items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-4">
-          <div className="flex justify-center">
-            <img 
-              src="/assets/generated/app-logo.dim_512x512.png" 
-              alt="Store Checklist Pro" 
-              className="w-24 h-24"
-            />
-          </div>
-          <div>
-            <CardTitle className="text-2xl font-bold">Store Checklist Pro</CardTitle>
-            <CardDescription className="mt-2">
-              {showAdminForm ? 'Enter admin credentials' : 'Choose your login option to continue'}
-            </CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {redirectMessage && (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{redirectMessage}</AlertDescription>
-            </Alert>
-          )}
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-8">
+      <div className="w-full max-w-md space-y-6">
+        {search.redirect && (
+          <Alert className="glass shadow-glass">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{search.redirect}</AlertDescription>
+          </Alert>
+        )}
 
-          {authError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{authError}</AlertDescription>
-            </Alert>
-          )}
-          
-          {!showAdminForm ? (
-            <>
-              <Button
-                onClick={handleUserLogin}
-                disabled={isLoading}
-                className="w-full h-14 text-base"
-                size="lg"
-              >
-                <ClipboardCheck className="mr-2 h-5 w-5" />
-                {isLoading ? 'Logging in...' : 'Login as User'}
-              </Button>
+        {actorLoading && (
+          <Alert className="glass shadow-glass bg-blue-50/70 dark:bg-blue-950/70 border-blue-200/50 dark:border-blue-800/50">
+            <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              Connecting to backend service...
+            </AlertDescription>
+          </Alert>
+        )}
 
+        {actorError && !actorLoading && (
+          <Alert variant="destructive" className="glass shadow-glass">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between gap-4">
+              <span className="flex-1">{actorError}</span>
               <Button
-                onClick={handleAdminClick}
-                disabled={isLoading}
                 variant="outline"
-                className="w-full h-14 text-base"
-                size="lg"
+                size="sm"
+                onClick={retry}
+                className="shrink-0 glass-subtle"
               >
-                <ShieldCheck className="mr-2 h-5 w-5" />
-                Login as Admin
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
               </Button>
-            </>
-          ) : (
-            <form onSubmit={handleAdminFormSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="adminUserId">User ID</Label>
-                <Input
-                  id="adminUserId"
-                  type="text"
-                  value={adminUserId}
-                  onChange={(e) => setAdminUserId(e.target.value)}
-                  placeholder="Enter admin user ID"
-                  autoComplete="username"
-                  autoFocus
-                />
-              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
-              <div className="space-y-2">
-                <Label htmlFor="adminPassword">Password</Label>
-                <Input
-                  id="adminPassword"
-                  type="password"
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  placeholder="Enter admin password"
-                  autoComplete="current-password"
-                />
-              </div>
-
-              <div className="flex gap-2">
+        <Card className="glass-strong shadow-glass-lg border-2">
+          <CardHeader className="text-center space-y-3">
+            <div className="flex justify-center mb-2">
+              <img 
+                src="/assets/generated/protect-logo.dim_512x512.png" 
+                alt="Protect" 
+                className="w-20 h-20 object-contain"
+              />
+            </div>
+            <CardTitle className="text-3xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Protect
+            </CardTitle>
+            <CardDescription className="text-base">
+              Choose how you want to access the application
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!showAdminForm ? (
+              <>
                 <Button
-                  type="button"
+                  onClick={handleUserLogin}
+                  disabled={isLoggingIn || isConnecting || !!actorError}
+                  className="w-full shadow-glass"
+                  size="lg"
+                >
+                  {isLoggingIn ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Logging in...
+                    </>
+                  ) : isConnecting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <User className="mr-2 h-4 w-4" />
+                      Login as User
+                    </>
+                  )}
+                </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-border/50" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="glass-subtle px-3 py-1 rounded-full text-muted-foreground">Or</span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => setShowAdminForm(true)}
                   variant="outline"
-                  onClick={handleBackToChoice}
-                  className="flex-1"
+                  disabled={isConnecting || !!actorError}
+                  className="w-full glass-subtle shadow-glass"
+                  size="lg"
                 >
-                  Back
+                  <Shield className="mr-2 h-4 w-4" />
+                  Login as Admin
                 </Button>
-                <Button
-                  type="submit"
-                  className="flex-1"
-                >
-                  <ShieldCheck className="mr-2 h-4 w-4" />
-                  Login
-                </Button>
-              </div>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+              </>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="adminUserId">Admin User ID</Label>
+                    <Input
+                      id="adminUserId"
+                      type="text"
+                      value={adminUserId}
+                      onChange={(e) => setAdminUserId(e.target.value)}
+                      placeholder="Enter admin user ID"
+                      disabled={isConnecting || !!actorError}
+                      className="glass-subtle"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="adminPassword">Admin Password</Label>
+                    <Input
+                      id="adminPassword"
+                      type="password"
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      placeholder="Enter admin password"
+                      disabled={isConnecting || !!actorError}
+                      className="glass-subtle"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAdminLogin();
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {adminError && (
+                    <Alert variant="destructive" className="glass shadow-glass">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{adminError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleAdminLogin}
+                      disabled={isConnecting || !!actorError}
+                      className="flex-1 shadow-glass"
+                    >
+                      {isConnecting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Connecting...
+                        </>
+                      ) : (
+                        'Login'
+                      )}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowAdminForm(false);
+                        setAdminUserId('');
+                        setAdminPassword('');
+                        setAdminError(null);
+                      }}
+                      variant="outline"
+                      disabled={isConnecting}
+                      className="glass-subtle"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

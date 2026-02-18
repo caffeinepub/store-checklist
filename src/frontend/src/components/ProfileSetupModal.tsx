@@ -23,7 +23,7 @@ export default function ProfileSetupModal({ open, onSave, isSaving }: ProfileSet
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
+      <DialogContent className="sm:max-w-md glass-strong shadow-glass-lg border-2" onInteractOutside={(e) => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>Welcome!</DialogTitle>
           <DialogDescription>
@@ -40,9 +40,10 @@ export default function ProfileSetupModal({ open, onSave, isSaving }: ProfileSet
               placeholder="Enter your name"
               disabled={isSaving}
               autoFocus
+              className="glass-subtle"
             />
           </div>
-          <Button type="submit" disabled={!name.trim() || isSaving} className="w-full">
+          <Button type="submit" disabled={!name.trim() || isSaving} className="w-full shadow-glass">
             {isSaving ? 'Saving...' : 'Continue'}
           </Button>
         </form>

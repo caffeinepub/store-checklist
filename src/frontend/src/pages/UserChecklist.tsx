@@ -109,7 +109,9 @@ export default function UserChecklist() {
       setTimeout(() => setShowSuccess(false), 5000);
     } catch (error: any) {
       console.error('Submission error:', error);
-      setValidationError(error.message || 'Failed to submit checklist. Please try again.');
+      // Display only the user-friendly message, technical details stay in console
+      const userMessage = error.message || 'Failed to submit checklist. Please try again.';
+      setValidationError(userMessage);
     }
   };
 
@@ -140,7 +142,7 @@ export default function UserChecklist() {
       />
 
       <div className="max-w-4xl mx-auto py-8 px-4">
-        <Card>
+        <Card className="glass-strong shadow-glass-lg border-2">
           <CardHeader>
             <CardTitle className="text-2xl">Store Checklist</CardTitle>
             <CardDescription>
@@ -149,7 +151,7 @@ export default function UserChecklist() {
           </CardHeader>
           <CardContent className="space-y-6">
             {actorLoading && (
-              <Alert className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+              <Alert className="glass shadow-glass bg-blue-50/70 dark:bg-blue-950/70 border-blue-200/50 dark:border-blue-800/50">
                 <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
                 <AlertDescription className="text-blue-800 dark:text-blue-200">
                   Connecting to backend service...
@@ -158,15 +160,15 @@ export default function UserChecklist() {
             )}
 
             {actorError && !actorLoading && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="glass shadow-glass">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="flex items-center justify-between">
-                  <span>{actorError}</span>
+                <AlertDescription className="flex items-center justify-between gap-4">
+                  <span className="flex-1">{actorError}</span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={retry}
-                    className="ml-4"
+                    className="shrink-0 glass-subtle"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Retry
@@ -176,7 +178,7 @@ export default function UserChecklist() {
             )}
 
             {showSuccess && (
-              <Alert className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+              <Alert className="glass shadow-glass bg-green-50/70 dark:bg-green-950/70 border-green-200/50 dark:border-green-800/50">
                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
                 <AlertDescription className="text-green-800 dark:text-green-200">
                   Checklist submitted successfully!
@@ -185,17 +187,17 @@ export default function UserChecklist() {
             )}
 
             {validationError && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="glass shadow-glass">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{validationError}</AlertDescription>
               </Alert>
             )}
 
             {createEntry.isError && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="glass shadow-glass">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  {createEntry.error?.message || 'Failed to submit checklist'}
+                  {createEntry.error?.message || 'Failed to submit checklist. Please try again.'}
                 </AlertDescription>
               </Alert>
             )}
@@ -208,6 +210,7 @@ export default function UserChecklist() {
                 onChange={(e) => setStoreName(e.target.value)}
                 placeholder="Enter store name"
                 disabled={isSubmitDisabled}
+                className="glass-subtle"
               />
             </div>
 
@@ -229,17 +232,17 @@ export default function UserChecklist() {
             <Button
               onClick={handleSubmit}
               disabled={isSubmitDisabled}
-              className="w-full"
+              className="w-full shadow-glass"
               size="lg"
             >
               {actorLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Connecting...
                 </>
               ) : createEntry.isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Submitting...
                 </>
               ) : (

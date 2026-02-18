@@ -1,30 +1,69 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T10:14:35.074Z",
-  "summary": "REQ-1 appears implemented by removing the “Built with … caffeine.ai” footer branding from `AppLayout.tsx`. However, the diff also adds a new copyright footer and modifies project/summary metadata files that were not requested in the BuildRequest.",
+  "generatedAt": "2026-02-18T10:54:38.537Z",
+  "summary": "REQ-1/2/3 appear largely implemented: backend exposes ping->\"pong\"; frontend introduces a backend-actor wrapper hook with retry/health-check and user-friendly English error messaging; footer attribution was removed. However, the diff also introduces several unrequested changes (styling overhaul, admin bootstrap/session behaviors, and a migration/state/auth refactor) that go beyond the stated non-goals.",
   "missing_requirements": [],
   "hallucinated_features": [
     {
-      "description": "Added a new footer message (copyright / “All rights reserved”) instead of only removing the Caffeine.ai branding.",
-      "reason": "BuildRequest only asked to remove the “Built with … caffeine.ai” text/link and keep spacing consistent; it did not request adding new footer content.",
+      "description": "Glassmorphism/design-system styling overhaul across many frontend components (layout/header/cards/modals, global CSS, Tailwind config)",
+      "reason": "BuildRequest focuses on restoring backend connectivity and removing the caffeine.ai footer regression; it explicitly lists 'Adding new product features beyond restoring backend connectivity and removing the caffeine.ai footer attribution' as a non-goal, and a broad styling redesign is not requested.",
       "evidence": [
-        "frontend/src/components/AppLayout.tsx"
+        "frontend-file-summaries.txt",
+        "frontend/src/index.css",
+        "frontend/tailwind.config.js",
+        "frontend/src/components/AppHeader.tsx",
+        "frontend/src/components/ChecklistItemCard.tsx",
+        "frontend/src/components/CameraCaptureModal.tsx",
+        "frontend/src/components/ProfileSetupModal.tsx"
       ]
     },
     {
-      "description": "Modified repository metadata/summary files (`frontend-file-summaries.txt` and `project_state.json`).",
-      "reason": "BuildRequest scope is a frontend UI change in `AppLayout.tsx`; it did not request updating project state or generated file summaries.",
+      "description": "Admin bootstrap functionality that calls a backend initialize() method to make the first authenticated user an admin",
+      "reason": "Not requested in any requirement; also potentially changes authorization/admin behavior beyond connectivity and footer removal.",
       "evidence": [
-        "frontend-file-summaries.txt",
-        "project_state.json"
+        "frontend-file-summaries.txt (mentions frontend/src/hooks/useAdminBootstrap.ts)"
+      ]
+    },
+    {
+      "description": "Admin session/credentials feature using sessionStorage utilities and hooks (adminSession.ts, useAdminSession.ts)",
+      "reason": "Not requested by the BuildRequest; introduces additional behavior around admin auth/session management beyond restoring connectivity and removing attribution.",
+      "evidence": [
+        "frontend-file-summaries.txt (mentions frontend/src/utils/adminSession.ts, frontend/src/hooks/useAdminSession.ts)",
+        "frontend/src/pages/AdminDashboard.tsx",
+        "frontend/src/pages/AdminSubmissionDetail.tsx",
+        "frontend/src/pages/LoginChoice.tsx"
+      ]
+    },
+    {
+      "description": "Backend state migration module that removes stored admin credentials from persistent state during upgrade",
+      "reason": "Not requested; changes data model/state upgrade behavior beyond connectivity restoration.",
+      "evidence": [
+        "backend/migration.mo",
+        "backend/main.mo (\"with migration = Migration.run\")"
+      ]
+    },
+    {
+      "description": "Backend authorization/access-control integration and new admin-guarded entry listing APIs",
+      "reason": "Not requested in the BuildRequest and may alter backend behavior beyond connection repair (introduces authorization guards and role checks).",
+      "evidence": [
+        "backend/main.mo (imports authorization/access-control, MixinAuthorization; uses authorizationGuard; hasAdminRole)"
       ]
     }
   ],
-  "confidence": 0.74,
+  "confidence": 0.72,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
     "frontend/src/components/AppLayout.tsx",
+    "frontend/src/hooks/useBackendActor.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/AdminDashboard.tsx",
+    "frontend/src/pages/AdminSubmissionDetail.tsx",
+    "frontend/src/pages/LoginChoice.tsx",
+    "frontend/src/pages/UserChecklist.tsx",
+    "frontend/src/utils/backendErrors.ts",
     "project_state.json"
   ]
 }

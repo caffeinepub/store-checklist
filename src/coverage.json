@@ -1,18 +1,33 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T10:14:35.077Z",
+  "generatedAt": "2026-02-18T10:54:38.540Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove the “Built with … caffeine.ai” branding link from the bottom footer so no Caffeine AI / caffeine.ai text or link is shown anywhere in the app layout footer.",
+        "summary": "Fix the frontend-to-backend connection so the app can successfully create a backend actor and call the backend without showing a persistent connection error.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/hooks/useBackendActor.ts",
+          "frontend/src/pages/LoginChoice.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/hooks/useBackendActor.ts",
+          "frontend/src/pages/LoginChoice.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-2",
+        "summary": "Remove the 'Built with caffeine.ai' attribution element from the bottom of the UI so it no longer appears in the app footer.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/components/AppLayout.tsx"
@@ -20,15 +35,43 @@
         "matchedFiles": [
           "frontend/src/components/AppLayout.tsx"
         ]
+      },
+      {
+        "id": "REQ-3",
+        "summary": "Ensure any user-facing backend connectivity error messages are in English and remain user-friendly (no raw technical stack traces shown in the UI).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/utils/backendErrors.ts",
+          "frontend/src/hooks/useBackendActor.ts",
+          "frontend/src/pages/UserChecklist.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/utils/backendErrors.ts",
+          "frontend/src/hooks/useBackendActor.ts",
+          "frontend/src/pages/UserChecklist.tsx"
+        ]
       }
     ]
   },
   "changedFiles": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/src/backend.d.ts",
+    "frontend/src/backend.ts",
     "frontend/src/components/AppLayout.tsx",
+    "frontend/src/declarations/backend.did.d.ts",
+    "frontend/src/declarations/backend.did.js",
+    "frontend/src/hooks/useBackendActor.ts",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/pages/AdminDashboard.tsx",
+    "frontend/src/pages/AdminSubmissionDetail.tsx",
+    "frontend/src/pages/LoginChoice.tsx",
+    "frontend/src/pages/UserChecklist.tsx",
+    "frontend/src/utils/backendErrors.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

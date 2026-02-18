@@ -1,176 +1,185 @@
-import { useNavigate, useParams } from '@tanstack/react-router';
 import { useEffect } from 'react';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { useGetEntry } from '../hooks/useQueries';
-import { useBackendActor } from '../hooks/useBackendActor';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { useAdminSession } from '../hooks/useAdminSession';
-import { setAdminRedirectMessage } from '../utils/adminSession';
-import { isBackendUnavailableError, isInvalidCredentialsError } from '../utils/backendErrors';
+import { useBackendActor } from '../hooks/useBackendActor';
+import { isInvalidCredentialsError } from '../utils/backendErrors';
+import { format } from 'date-fns';
+import { ExternalBlob } from '../backend';
 
 export default function AdminSubmissionDetail() {
   const navigate = useNavigate();
-  const { entryId } = useParams({ from: '/admin/submission/$entryId' });
+  const { entryId } = useParams({ strict: false }) as { entryId: string };
   const { credentials, clearSession } = useAdminSession();
-  const { actorReady, actorLoading, actorError, retry: retryActor } = useBackendActor();
+  const { actorReady, actorLoading, actorError, retry } = useBackendActor();
   const { data: entry, isLoading: entryLoading, error: entryError, refetch } = useGetEntry(entryId);
+
+  // Log query errors for debugging
+  useEffect(() => {
+    if (entryError) {
+      console.error('Entry query error:', {
+        message: entryError.message,
+        originalError: (entryError as any).originalError,
+      });
+    }
+  }, [entryError]);
 
   useEffect(() => {
     if (!credentials) {
-      setAdminRedirectMessage('Admin login is required to access submission details.');
-      navigate({ to: '/' });
+      navigate({ to: '/', search: { redirect: 'Session expired. Please log in again.' } });
+      return;
     }
-  }, [credentials, navigate]);
 
-  // Handle backend errors - only redirect on invalid credentials
-  useEffect(() => {
-    if (entryError) {
-      if (isInvalidCredentialsError(entryError)) {
-        clearSession();
-        setAdminRedirectMessage('Invalid admin credentials. Please log in again.');
-        navigate({ to: '/' });
-      }
+    // Check for invalid credentials error
+    if (entryError && isInvalidCredentialsError(entryError)) {
+      clearSession();
+      navigate({ to: '/', search: { redirect: 'Invalid credentials. Please log in again.' } });
     }
-  }, [entryError, clearSession, navigate]);
+  }, [credentials, entryError, navigate, clearSession]);
 
-  const isLoading = actorLoading || entryLoading;
-  const hasError = actorError || entryError;
-  const errorMessage = actorError || entryError?.message || 'An error occurred';
-  const isBackendUnavailable = hasError && (
-    (actorError && isBackendUnavailableError(actorError)) ||
-    (entryError && isBackendUnavailableError(entryError))
-  );
-
-  const handleRetry = () => {
+  const handleRetry = async () => {
     if (actorError) {
-      retryActor();
-    } else {
-      refetch();
+      // If actor failed, retry actor initialization
+      await retry();
+    } else if (entryError) {
+      // If query failed, refetch the query
+      await refetch();
     }
   };
 
-  if (!credentials || isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        {actorLoading && (
-          <p className="text-sm text-muted-foreground">Connecting to backend service...</p>
-        )}
-      </div>
-    );
-  }
+  const isLoading = actorLoading || entryLoading;
+  const hasError = !!(actorError || entryError);
 
-  if (hasError) {
-    return (
-      <div className="max-w-2xl mx-auto py-8 px-4">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            {typeof errorMessage === 'string' ? errorMessage : 'Failed to load submission details'}
-          </AlertDescription>
-        </Alert>
-        <div className="flex gap-2 mt-4">
-          <Button onClick={() => navigate({ to: '/admin' })} variant="outline">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          {isBackendUnavailable && (
-            <Button onClick={handleRetry}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (!entry) {
-    return (
-      <div className="max-w-2xl mx-auto py-8 px-4">
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Submission not found</AlertDescription>
-        </Alert>
-        <Button onClick={() => navigate({ to: '/admin' })} className="mt-4">
+  return (
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={() => navigate({ to: '/admin' })}
+          className="glass-subtle shadow-glass"
+        >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Dashboard
         </Button>
       </div>
-    );
-  }
 
-  const formatDate = (timestamp: bigint) => {
-    const date = new Date(Number(timestamp) / 1_000_000);
-    return date.toLocaleString();
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      <Button
-        variant="ghost"
-        onClick={() => navigate({ to: '/admin' })}
-        className="mb-4"
-      >
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Dashboard
-      </Button>
-
-      <Card>
+      <Card className="glass-strong shadow-glass-lg border-2">
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-2xl">{entry.storeName}</CardTitle>
-              <CardDescription className="mt-2">
-                Submission ID: {entry.id}
-              </CardDescription>
-            </div>
-            <Badge variant="secondary">{entry.items.length} items</Badge>
-          </div>
+          <CardTitle className="text-2xl">Submission Details</CardTitle>
+          <CardDescription>
+            View detailed information about this checklist submission
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Submitted By</p>
-              <p className="font-mono text-sm mt-1">{entry.submitter.toString()}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Date & Time</p>
-              <p className="text-sm mt-1">{formatDate(entry.timestamp)}</p>
-            </div>
-          </div>
+          {actorLoading && (
+            <Alert className="glass shadow-glass bg-blue-50/70 dark:bg-blue-950/70 border-blue-200/50 dark:border-blue-800/50">
+              <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+              <AlertDescription className="text-blue-800 dark:text-blue-200">
+                Connecting to backend service...
+              </AlertDescription>
+            </Alert>
+          )}
 
-          <Separator />
+          {actorError && !actorLoading && (
+            <Alert variant="destructive" className="glass shadow-glass">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between gap-4">
+                <span className="flex-1">{actorError}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetry}
+                  className="shrink-0 glass-subtle"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Checklist Items</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {entry.items.map((item, index) => (
-                <Card key={index}>
-                  <CardHeader>
-                    <CardTitle className="text-base">{item.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {item.photo ? (
-                      <img
-                        src={item.photo.getDirectURL()}
-                        alt={item.name}
-                        className="w-full h-48 object-cover rounded-md"
-                      />
-                    ) : (
-                      <div className="w-full h-48 bg-muted rounded-md flex items-center justify-center text-muted-foreground">
-                        No photo
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+          {entryError && !actorError && (
+            <Alert variant="destructive" className="glass shadow-glass">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between gap-4">
+                <span className="flex-1">{entryError.message}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRetry}
+                  className="shrink-0 glass-subtle"
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          </div>
+          ) : hasError ? (
+            <div className="text-center py-12 text-muted-foreground">
+              Unable to load submission details. Please retry.
+            </div>
+          ) : !entry ? (
+            <div className="text-center py-12 text-muted-foreground">
+              Submission not found
+            </div>
+          ) : (
+            <>
+              <div className="glass-subtle rounded-lg p-6 space-y-4 shadow-glass">
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Store Name</h3>
+                  <p className="text-lg font-semibold mt-1">{entry.storeName}</p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Submission Date</h3>
+                  <p className="text-lg mt-1">
+                    {format(new Date(Number(entry.timestamp) / 1000000), 'PPP p')}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Submitter</h3>
+                  <p className="text-sm font-mono mt-1 break-all">{entry.submitter.toString()}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Checklist Items</h3>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {entry.items.map((item, index) => (
+                    <Card key={index} className="glass-subtle shadow-glass">
+                      <CardHeader>
+                        <CardTitle className="text-base">{item.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {item.photo ? (
+                          <div className="aspect-video relative rounded-lg overflow-hidden ring-1 ring-border/50">
+                            <img
+                              src={(item.photo as ExternalBlob).getDirectURL()}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="aspect-video flex items-center justify-center bg-muted/50 rounded-lg ring-1 ring-border/50">
+                            <p className="text-sm text-muted-foreground">No photo</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
