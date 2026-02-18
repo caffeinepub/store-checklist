@@ -1,18 +1,36 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Add a dashboard filter/sort option to view entries by date and store name, keeping the rest of the application unchanged (including Admin credentials).",
+  "summary": "Project now focused on fixing admin login authentication so Admin/Admin works and remains properly connected to the backend after the update.",
   "architectural_notes": [
-    "Do not modify any other parts of the application; specifically do not change Admin credentials. Only add the requested Dashboard filter/sort."
+    "Admin login authentication should validate credentials against the backend/auth source (not stale cache or mismatched storage) and preserve backend connectivity after updates."
   ],
-  "known_issues": [],
-  "isFixRequest": false,
+  "known_issues": [
+    "Admin login shows 'admin credentials required' / denies access even when entering Admin as username and Admin as password."
+  ],
+  "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-add-a-filter-ui-to-the-admin-dashboard-that-allows-admins-to-narrow-the-submissions-table-by-1-store-name-and-2-submitted-date-without-changing-any-other-dashboard-behavior",
-      "title": "Add a filter UI to the Admin Dashboard that allows admins to narrow the submissions table by (1) store name and (2) submitted date, without changing any other dashboard behavior.",
+      "id": "feature-update-the-frontend-admin-data-fetching-flow-to-call-the-backend-s-credential-based-admin-methods-using-the-credentials-from-the-existing-admin-session-sessionstorage-ensuring-the-admin-dashboard-and-admin-submission-detail-load-successfully-after-logging-in-with-admin-admin",
+      "title": "Update the frontend admin data-fetching flow to call the backend’s credential-based admin methods using the credentials from the existing admin session (sessionStorage), ensuring the Admin Dashboard and Admin Submission Detail load successfully after logging in with \"Admin\"/\"Admin\".",
       "reqIds": [
-        "REQ-1"
+        "REQ-2"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-the-admin-credential-check-in-the-loginchoice-admin-login-form-robust-to-common-input-issues-e-g-leading-trailing-whitespace-while-keeping-user-facing-error-text-in-english",
+      "title": "Make the admin credential check in the LoginChoice admin login form robust to common input issues (e.g., leading/trailing whitespace), while keeping user-facing error text in English.",
+      "reqIds": [
+        "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-admin-login-session-backend-connectivity-remains-stable-across-refresh-and-actor-initialization-so-admin-pages-do-not-erroneously-show-admin-credentials-required-while-valid-credentials-are-present",
+      "title": "Ensure the admin login/session + backend connectivity remains stable across refresh and actor initialization, so admin pages do not erroneously show \"admin credentials required\" while valid credentials are present.",
+      "reqIds": [
+        "REQ-4"
       ],
       "version": 1
     }
@@ -20,8 +38,16 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Add Dashboard filter/sort option to view by date and store name; do not change any other app behavior or Admin credentials.",
+      "summary": "Fix admin login: Admin/Admin credentials not accepted; ensure authentication connects to backend flawlessly after update",
       "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Update the backend to support admin access using the admin credentials stored in the frontend session so that an admin user who logs in with User ID \"Admin\" and Password \"Admin\" can successfully load admin data without triggering backend \"Unauthorized\" errors.",
+      "reqIds": [
+        "REQ-1"
+      ],
       "status": "pending"
     }
   ],

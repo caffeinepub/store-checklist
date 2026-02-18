@@ -1,14 +1,68 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-18T08:38:40.385Z",
-  "summary": "The diff adds client-side filter state and memoized filtering logic to AdminDashboard for store name (case-insensitive substring match) and submitted date (calendar-day match in local time), including a clear/reset function. The render/UI portion is truncated, so the presence/placement of the actual filter controls and clear action in the visible UI cannot be fully verified from the provided excerpt.",
-  "missing_requirements": [],
-  "hallucinated_features": [],
-  "confidence": 0.63,
+  "generatedAt": "2026-02-18T10:09:14.047Z",
+  "summary": "Frontend improvements were made around admin session persistence (rehydration across refresh/visibility changes) and the admin login form now trims whitespace before validating \"Admin\"/\"Admin\". However, the diff does not show the required backend credential-based admin query entry points, nor clear evidence that the frontend admin data-fetching was updated to call such credential-based backend methods.",
+  "missing_requirements": [
+    {
+      "id": "REQ-1",
+      "requirement": "Backend exposes credential-based admin-query entry points that accept (userId, password) and return the same data currently returned by principal-protected admin query methods; accepts \"Admin\"/\"Admin\" and rejects invalid credentials with an Unauthorized-style error; does not require Internet Identity admin privileges; user flows remain unchanged.",
+      "reason": "In the shown portion of backend/main.mo, admin queries (getAllChecklistEntries/getEntry/filter...) are still protected by AccessControl.hasPermission(... #admin) on caller principal. No credential-accepting admin query methods are visible in the diff summary.",
+      "evidence": [
+        "backend/main.mo"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "requirement": "Frontend admin data-fetching flow calls backend credential-based admin methods using credentials from sessionStorage; /admin and /admin/submission/$entryId load successfully after Admin/Admin login; invalid credentials clear session and show error state.",
+      "reason": "AdminDashboard and AdminSubmissionDetail still use useGetAllEntriesSortedByNewest/useGetEntry without any visible passing of (userId, password) to the backend. The diff summary does not show updates to frontend/src/hooks/useQueries.ts to use new credential-based backend methods, nor any explicit invalid-credential error-state rendering on the admin pages (only redirect/clear session on unauthorized).",
+      "evidence": [
+        "frontend/src/pages/AdminDashboard.tsx",
+        "frontend/src/pages/AdminSubmissionDetail.tsx",
+        "frontend-file-summaries.txt (mentions useQueries changes but provides no concrete evidence of calling credential-based backend methods)"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Added/changed global layout footer attribution text: \"© {year} All rights reserved. Made by Sayed Shuja\" across all pages.",
+      "reason": "Not requested by the BuildRequest (admin login/auth fix only).",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/components/AppLayout.tsx summary)"
+      ]
+    },
+    {
+      "description": "Restructured CameraCaptureModal layout (fixed header, scrollable body, pinned footer), safe-area padding, responsive sizing changes.",
+      "reason": "Not requested by the BuildRequest; unrelated to admin auth reliability.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/components/CameraCaptureModal.tsx summary)",
+        "frontend/src/index.css (safe-area utility mentioned in summary)"
+      ]
+    },
+    {
+      "description": "Introduced/updated Tailwind theme tokens and global industrial OKLCH color palette styling changes.",
+      "reason": "Not requested by the BuildRequest; unrelated to admin auth fix.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/index.css summary)",
+        "frontend-file-summaries.txt (frontend/tailwind.config.js summary)"
+      ]
+    },
+    {
+      "description": "Added an 'admin bootstrap' hook that calls backend initialize() to make the first authenticated user an admin.",
+      "reason": "Not requested; BuildRequest explicitly focuses on Admin/Admin credential-based admin access without changing normal Internet Identity flows.",
+      "evidence": [
+        "frontend-file-summaries.txt (frontend/src/hooks/useAdminBootstrap.ts summary)"
+      ]
+    }
+  ],
+  "confidence": 0.66,
   "changed_files": [
+    "backend/main.mo",
     "frontend-file-summaries.txt",
+    "frontend/src/hooks/useAdminSession.ts",
     "frontend/src/pages/AdminDashboard.tsx",
+    "frontend/src/pages/AdminSubmissionDetail.tsx",
+    "frontend/src/pages/LoginChoice.tsx",
     "project_state.json"
   ]
 }

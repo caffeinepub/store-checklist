@@ -1,54 +1,97 @@
 {
   "kind": "build_request",
-  "title": "Add Admin Dashboard filters for date and store name",
+  "title": "Fix admin login so Admin/Admin grants backend access reliably",
   "projectName": "Store Checklist Pro",
-  "priority": "normal",
+  "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Add a filter UI to the Admin Dashboard that allows admins to narrow the submissions table by (1) store name and (2) submitted date, without changing any other dashboard behavior.",
-      "target": "frontend",
+      "text": "Update the backend to support admin access using the admin credentials stored in the frontend session so that an admin user who logs in with User ID \"Admin\" and Password \"Admin\" can successfully load admin data without triggering backend \"Unauthorized\" errors.",
+      "target": "backend",
       "source": {
         "messageIds": [
-          "msg-user-1"
+          "msg-1"
         ],
         "quotes": [
-          "In Dashboard give a Filter to see by date, store name but do not touch any other part of application do not mess with Admin credentials keep everything as same as it is just add one Filter or sort option as required rest everything will remain same"
+          "In admin login i am entering Admin as user name and Admin as password it’s not accessible update it and make sure even after update it connects to the backend flawlessly"
         ]
       },
       "acceptanceCriteria": [
-        "Admin Dashboard (frontend/src/pages/AdminDashboard.tsx) displays filter controls above the submissions table for: Store Name and Date (user-facing labels in English).",
-        "Store Name filter supports typing a value and filters the visible table rows based on entry.storeName (case-insensitive match is acceptable).",
-        "Date filter allows selecting a date and filters visible table rows to entries whose timestamp falls on that selected calendar date (based on local time as used by existing toLocaleString formatting).",
-        "A clear/reset action is available to return to showing all submissions.",
-        "When no filters are set, the table shows the same entries in the same order as before (newest-first from the existing query).",
-        "Filtering is client-side only (does not require new backend calls) and does not change existing error handling, loading states, navigation to submission detail, or admin session redirect behavior."
+        "Backend exposes admin-query entry points that accept (userId, password) and return the same data currently returned by the principal-protected admin query methods.",
+        "Credential validation accepts \"Admin\"/\"Admin\" (at minimum) and rejects incorrect credentials with a clear \"Unauthorized\"-style error message.",
+        "Admin queries made via the credential-based methods do not require Internet Identity admin privileges and succeed when valid credentials are provided.",
+        "Existing user flows (profile + checklist submission) remain unchanged and continue to require user permission checks."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Update the frontend admin data-fetching flow to call the backend’s credential-based admin methods using the credentials from the existing admin session (sessionStorage), ensuring the Admin Dashboard and Admin Submission Detail load successfully after logging in with \"Admin\"/\"Admin\".",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "make sure even after update it connects to the backend flawlessly"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After submitting the admin login form with User ID \"Admin\" and Password \"Admin\", navigation to /admin loads submissions without redirecting back to / with an \"Admin access required\" message.",
+        "/admin/submission/$entryId loads submission details successfully when accessed from the dashboard while an admin session exists.",
+        "If admin credentials are missing, the app continues to redirect to / with an English redirect message indicating admin login is required.",
+        "If admin credentials are invalid, admin pages show an English error state and clear the stored admin session."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Make the admin credential check in the LoginChoice admin login form robust to common input issues (e.g., leading/trailing whitespace), while keeping user-facing error text in English.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "In admin login i am entering Admin as user name and Admin as password it’s not accessible"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Entering \"Admin\"/\"Admin\" with extra leading/trailing spaces still logs in successfully.",
+        "Entering empty values still shows the existing English required-fields error.",
+        "Entering incorrect credentials still shows the existing English invalid-credentials error and does not create an admin session."
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Ensure the admin login/session + backend connectivity remains stable across refresh and actor initialization, so admin pages do not erroneously show \"admin credentials required\" while valid credentials are present.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "make sure even after update it connects to the backend flawlessly"
+        ]
+      },
+      "acceptanceCriteria": [
+        "With a valid admin session stored in sessionStorage, refreshing /admin keeps the user on /admin and successfully reloads data once the backend actor is ready.",
+        "Transient backend actor initialization does not clear the admin session; admin pages wait for actor readiness and then fetch data using the stored credentials.",
+        "If the backend is unavailable, admin pages show the existing retry UX and do not misreport the situation as an admin-credential problem."
       ]
     }
   ],
   "constraints": [
-    "Do not change or invalidate the shared Admin credentials model; specifically do not change backend/main.mo adminUserId/adminPassword values (\"Admin\"/\"Admin\") or the frontend credential validation behavior.",
-    "Do not modify any routes, login flows, admin session storage/clearing behavior, or backend query/mutation APIs beyond what is required to filter the Admin Dashboard list view.",
-    "Do not edit files under frontend/src/components/ui or any other frontend immutable paths listed in SYSTEM_CONTEXT.",
-    "Use English for any user-facing text added."
+    "Backend must remain a single Motoko actor in backend/main.mo (no additional backend services).",
+    "Do not edit any files under frontend/src/components/ui or other immutable paths listed in SYSTEM_CONTEXT.",
+    "Use English for all user-facing text.",
+    "Do not introduce third-party authentication providers; only Internet Identity and the existing admin credential form/session may be used."
   ],
   "nonGoals": [
-    "Adding new admin roles, permissions, or authentication mechanisms.",
-    "Changing how submissions are created, stored, or sorted on the backend.",
-    "Adding filters to AdminSubmissionDetail or other pages."
+    "Implementing role management UI for multiple admins.",
+    "Adding a database or any external storage service.",
+    "Changing the Internet Identity login flow for normal users."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

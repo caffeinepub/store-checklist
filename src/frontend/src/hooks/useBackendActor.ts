@@ -27,7 +27,7 @@ export function useBackendActor(): UseBackendActorReturn {
   // Determine error state
   let actorError: string | null = null;
   if (!actorLoading && !actor) {
-    actorError = 'Unable to connect to backend service. Please refresh the page.';
+    actorError = 'Unable to connect to backend service. Please try again.';
   }
 
   // Retry function - forces a page reload as the simplest recovery

@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-filter-ui-to-the-admin-dashboard-that-allows-admins-to-narrow-the-submissions-table-by-1-store-name-and-2-submitted-date-without-changing-any-other-dashboard-behavior",
-      "featureTitle": "Add a filter UI to the Admin Dashboard that allows admins to narrow the submissions table by (1) store name and (2) submitted date, without changing any other dashboard behavior.",
+      "featureId": "feature-update-the-frontend-admin-data-fetching-flow-to-call-the-backend-s-credential-based-admin-methods-using-the-credentials-from-the-existing-admin-session-sessionstorage-ensuring-the-admin-dashboard-and-admin-submission-detail-load-successfully-after-logging-in-with-admin-admin",
+      "featureTitle": "Update the frontend admin data-fetching flow to call the backend’s credential-based admin methods using the credentials from the existing admin session (sessionStorage), ensuring the Admin Dashboard and Admin Submission Detail load successfully after logging in with \"Admin\"/\"Admin\".",
       "files": [
-        "frontend/src/pages/AdminDashboard.tsx"
+        "frontend/src/pages/AdminDashboard.tsx",
+        "frontend/src/pages/AdminSubmissionDetail.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -18,7 +19,51 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-1"
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-make-the-admin-credential-check-in-the-loginchoice-admin-login-form-robust-to-common-input-issues-e-g-leading-trailing-whitespace-while-keeping-user-facing-error-text-in-english",
+      "featureTitle": "Make the admin credential check in the LoginChoice admin login form robust to common input issues (e.g., leading/trailing whitespace), while keeping user-facing error text in English.",
+      "files": [
+        "frontend/src/pages/LoginChoice.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-admin-login-session-backend-connectivity-remains-stable-across-refresh-and-actor-initialization-so-admin-pages-do-not-erroneously-show-admin-credentials-required-while-valid-credentials-are-present",
+      "featureTitle": "Ensure the admin login/session + backend connectivity remains stable across refresh and actor initialization, so admin pages do not erroneously show \"admin credentials required\" while valid credentials are present.",
+      "files": [
+        "frontend/src/hooks/useAdminSession.ts",
+        "frontend/src/pages/AdminDashboard.tsx",
+        "frontend/src/pages/AdminSubmissionDetail.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "blob-storage@4.0.0",
+        "camera@1.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }

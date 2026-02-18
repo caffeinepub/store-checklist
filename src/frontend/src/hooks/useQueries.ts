@@ -2,8 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useBackendActor } from './useBackendActor';
 import type { StoreChecklistEntry, ChecklistItem, UserProfile } from '../backend';
 import { ExternalBlob } from '../backend';
-import { normalizeBackendError, isInvalidCredentialsError, isBackendUnavailableError } from '../utils/backendErrors';
-import { useAdminSession } from './useAdminSession';
+import { normalizeBackendError, isUnauthorizedError, isBackendUnavailableError } from '../utils/backendErrors';
 
 // User profile queries
 export function useGetCallerUserProfile() {
@@ -79,35 +78,28 @@ export function useCreateChecklistEntry() {
   });
 }
 
-// Admin queries - these require admin credentials to be passed to the backend
+// Admin queries - these use the new authorization system (no credentials passed)
 export function useGetAllEntriesSortedByNewest() {
   const { actor, actorReady, actorLoading } = useBackendActor();
-  const { credentials } = useAdminSession();
 
   return useQuery<StoreChecklistEntry[]>({
     queryKey: ['checklistEntries', 'all', 'sorted'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      if (!credentials) throw new Error('Admin credentials required');
       
       try {
-        return await actor.getAllEntriesSortedByNewestEntries(credentials.userId, credentials.password);
+        return await actor.getAllEntriesSortedByNewestEntries();
       } catch (error) {
-        // Preserve the original error for credential checking, but normalize the message
-        const normalized = normalizeBackendError(error);
-        const newError = new Error(normalized);
-        // Attach original error for debugging
-        (newError as any).originalError = error;
-        throw newError;
+        throw new Error(normalizeBackendError(error));
       }
     },
-    enabled: actorReady && !!credentials,
+    enabled: actorReady,
     retry: (failureCount, error) => {
-      // Don't retry on invalid credentials
-      if (isInvalidCredentialsError(error)) {
+      // Don't retry on unauthorized errors
+      if (isUnauthorizedError(error)) {
         return false;
       }
-      // Don't retry too many times on backend unavailable
+      // Retry up to 2 times on backend unavailable
       if (isBackendUnavailableError(error)) {
         return failureCount < 2;
       }
@@ -118,32 +110,25 @@ export function useGetAllEntriesSortedByNewest() {
 
 export function useGetEntry(entryId: string) {
   const { actor, actorReady, actorLoading } = useBackendActor();
-  const { credentials } = useAdminSession();
 
   return useQuery<StoreChecklistEntry | null>({
     queryKey: ['checklistEntry', entryId],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      if (!credentials) throw new Error('Admin credentials required');
       
       try {
-        return await actor.getEntry(credentials.userId, credentials.password, entryId);
+        return await actor.getEntry(entryId);
       } catch (error) {
-        // Preserve the original error for credential checking, but normalize the message
-        const normalized = normalizeBackendError(error);
-        const newError = new Error(normalized);
-        // Attach original error for debugging
-        (newError as any).originalError = error;
-        throw newError;
+        throw new Error(normalizeBackendError(error));
       }
     },
-    enabled: actorReady && !!credentials && !!entryId,
+    enabled: actorReady && !!entryId,
     retry: (failureCount, error) => {
-      // Don't retry on invalid credentials
-      if (isInvalidCredentialsError(error)) {
+      // Don't retry on unauthorized errors
+      if (isUnauthorizedError(error)) {
         return false;
       }
-      // Don't retry too many times on backend unavailable
+      // Retry up to 2 times on backend unavailable
       if (isBackendUnavailableError(error)) {
         return failureCount < 2;
       }

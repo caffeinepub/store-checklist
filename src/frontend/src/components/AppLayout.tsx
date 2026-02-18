@@ -15,15 +15,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <footer className="border-t py-6 px-4">
         <div className="container mx-auto text-center text-sm text-muted-foreground">
           <p>
-            © {new Date().getFullYear()} Built with ❤️ using{' '}
-            <a
-              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-foreground transition-colors"
-            >
-              caffeine.ai
-            </a>
+            © {new Date().getFullYear()} All rights reserved. Made by Sayed Shuja
           </p>
         </div>
       </footer>

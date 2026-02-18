@@ -129,15 +129,16 @@ export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createChecklistEntry(storeName: string, items: Array<ChecklistItem>): Promise<string>;
-    filterEntriesByStoreName(userId: string, password: string, storeName: string): Promise<Array<StoreChecklistEntry>>;
-    filterEntriesByUser(userId: string, password: string, user: Principal): Promise<Array<StoreChecklistEntry>>;
-    getAllChecklistEntries(userId: string, password: string): Promise<Array<StoreChecklistEntry>>;
-    getAllEntriesSortedByNewestEntries(userId: string, password: string): Promise<Array<StoreChecklistEntry>>;
-    getAllEntriesSortedByStore(userId: string, password: string, storeName: string): Promise<Array<StoreChecklistEntry>>;
+    filterEntriesByStoreName(storeName: string): Promise<Array<StoreChecklistEntry>>;
+    filterEntriesByUser(user: Principal): Promise<Array<StoreChecklistEntry>>;
+    getAllChecklistEntries(): Promise<Array<StoreChecklistEntry>>;
+    getAllEntriesSortedByNewestEntries(): Promise<Array<StoreChecklistEntry>>;
+    getAllEntriesSortedByStore(storeName: string): Promise<Array<StoreChecklistEntry>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
-    getEntry(userId: string, password: string, entryId: string): Promise<StoreChecklistEntry | null>;
+    getEntry(entryId: string): Promise<StoreChecklistEntry | null>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    isAdmin(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
 }
@@ -270,73 +271,73 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async filterEntriesByStoreName(arg0: string, arg1: string, arg2: string): Promise<Array<StoreChecklistEntry>> {
+    async filterEntriesByStoreName(arg0: string): Promise<Array<StoreChecklistEntry>> {
         if (this.processError) {
             try {
-                const result = await this.actor.filterEntriesByStoreName(arg0, arg1, arg2);
+                const result = await this.actor.filterEntriesByStoreName(arg0);
                 return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.filterEntriesByStoreName(arg0, arg1, arg2);
+            const result = await this.actor.filterEntriesByStoreName(arg0);
             return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
         }
     }
-    async filterEntriesByUser(arg0: string, arg1: string, arg2: Principal): Promise<Array<StoreChecklistEntry>> {
+    async filterEntriesByUser(arg0: Principal): Promise<Array<StoreChecklistEntry>> {
         if (this.processError) {
             try {
-                const result = await this.actor.filterEntriesByUser(arg0, arg1, arg2);
+                const result = await this.actor.filterEntriesByUser(arg0);
                 return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.filterEntriesByUser(arg0, arg1, arg2);
+            const result = await this.actor.filterEntriesByUser(arg0);
             return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getAllChecklistEntries(arg0: string, arg1: string): Promise<Array<StoreChecklistEntry>> {
+    async getAllChecklistEntries(): Promise<Array<StoreChecklistEntry>> {
         if (this.processError) {
             try {
-                const result = await this.actor.getAllChecklistEntries(arg0, arg1);
+                const result = await this.actor.getAllChecklistEntries();
                 return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getAllChecklistEntries(arg0, arg1);
+            const result = await this.actor.getAllChecklistEntries();
             return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getAllEntriesSortedByNewestEntries(arg0: string, arg1: string): Promise<Array<StoreChecklistEntry>> {
+    async getAllEntriesSortedByNewestEntries(): Promise<Array<StoreChecklistEntry>> {
         if (this.processError) {
             try {
-                const result = await this.actor.getAllEntriesSortedByNewestEntries(arg0, arg1);
+                const result = await this.actor.getAllEntriesSortedByNewestEntries();
                 return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getAllEntriesSortedByNewestEntries(arg0, arg1);
+            const result = await this.actor.getAllEntriesSortedByNewestEntries();
             return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getAllEntriesSortedByStore(arg0: string, arg1: string, arg2: string): Promise<Array<StoreChecklistEntry>> {
+    async getAllEntriesSortedByStore(arg0: string): Promise<Array<StoreChecklistEntry>> {
         if (this.processError) {
             try {
-                const result = await this.actor.getAllEntriesSortedByStore(arg0, arg1, arg2);
+                const result = await this.actor.getAllEntriesSortedByStore(arg0);
                 return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getAllEntriesSortedByStore(arg0, arg1, arg2);
+            const result = await this.actor.getAllEntriesSortedByStore(arg0);
             return from_candid_vec_n14(this._uploadFile, this._downloadFile, result);
         }
     }
@@ -368,17 +369,17 @@ export class Backend implements backendInterface {
             return from_candid_UserRole_n23(this._uploadFile, this._downloadFile, result);
         }
     }
-    async getEntry(arg0: string, arg1: string, arg2: string): Promise<StoreChecklistEntry | null> {
+    async getEntry(arg0: string): Promise<StoreChecklistEntry | null> {
         if (this.processError) {
             try {
-                const result = await this.actor.getEntry(arg0, arg1, arg2);
+                const result = await this.actor.getEntry(arg0);
                 return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getEntry(arg0, arg1, arg2);
+            const result = await this.actor.getEntry(arg0);
             return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
         }
     }
@@ -394,6 +395,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getUserProfile(arg0);
             return from_candid_opt_n22(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async isAdmin(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isAdmin();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isAdmin();
+            return result;
         }
     }
     async isCallerAdmin(): Promise<boolean> {
